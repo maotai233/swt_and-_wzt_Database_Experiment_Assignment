@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>读者管理 - 图书管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.bootcdn.net/ajax/libs/daisyui/4.12.10/full.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+  <!-- 导航栏 -->
+  <div class="navbar" style="background-color:#7F5FCE; color:white;">
+    <div class="flex-1">
+      <a href="/admin/dashboard" class="btn btn-ghost normal-case text-xl">
+        <i class="fas fa-book mr-2"></i>图书管理系统 - 管理员
+      </a>
+    </div>
+    <div class="flex-none">
+      <ul class="menu menu-horizontal px-1">
+        <li class="mr-4"> <a href="/admin/dashboard" class="btn border-none" style="background-color: #d4c4e7; ">返回管理员面板</a></li>
+        <li><a href="/logout" class="btn btn-error">退出登录</a></li>
+      </ul>
+    </div>
+  </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <!-- 页面标题 -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">
+                <i class="fas fa-hand-holding text-blue-600 mr-3"></i>借阅管理
+            </h1>
+            <p class="text-gray-600 mt-2">管理图书的借阅和归还</p>
+        </div>
+
+        <!-- 借阅操作区域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- 借书操作 -->
+            <div class="card bg-white shadow-lg">
+                <div class="card-body">
+                    <h2 class="card-title text-green-600">
+                        <i class="fas fa-book-reader mr-2"></i>借书操作
+                    </h2>
+                    <form id="borrowForm" class="space-y-4">
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">借阅卡号</span>
+                            </label>
+                            <input type="text" id="borrow_card_number" class="input input-bordered" required>
+                        </div>
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">图书编号</span>
+                            </label>
+                            <input type="text" id="borrow_book_number" class="input input-bordered" required>
+                        </div>
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">借期天数</span>
+                            </label>
+                            <input type="number" id="borrow_days" value="30" class="input input-bordered" required>
+                        </div>
+                        <button type="submit" class="btn btn-success w-full border-none" style="background-color: #16A34A; color: white;">
+                            <i class="fas fa-plus mr-2"></i>办理借书
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 还书操作 -->
+            <div class="card bg-white shadow-lg">
+                <div class="card-body">
+                    <h2 class="card-title text-blue-600">
+                        <i class="fas fa-book-open mr-2"></i>还书操作
+                    </h2>
+                    <form id="returnForm" class="space-y-4">
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">借阅卡号</span>
+                            </label>
+                            <input type="text" id="return_card_number" class="input input-bordered" required>
+                        </div>
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">图书编号</span>
+                            </label>
+                            <input type="text" id="return_book_number" class="input input-bordered" required>
+                        </div>
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">图书状态</span>
+                            </label>
+                            <select id="return_status" class="select select-bordered">
+                                <option value="normal">正常</option>
+                                <option value="damaged">损坏</option>
+                                <option value="lost">丢失</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-full border-none" style="background-color: #2563EB; color: white;">
+                            <i class="fas fa-check mr-2"></i>办理还书
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 当前借阅列表 -->
+        <div class="card bg-white shadow-lg mb-8">
+            <div class="card-body">
+                <h2 class="card-title text-purple-600 mb-4">
+                    <i class="fas fa-list mr-2"></i>当前借阅记录
+                </h2>
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra w-full">
+                        <thead>
+                            <tr class="bg-purple-50">
+                                <th>借阅卡号</th>
+                                <th>图书编号</th>
+                                <th>书名</th>
+                                <th>读者姓名</th>
+                                <th>借书日期</th>
+                                <th>应还日期</th>
+                                <th>续借状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="currentBorrows">
+                            {% for borrow in current_borrows %}
+                            <tr>
+                                <td>{{ borrow.card_number }}</td>
+                                <td>{{ borrow.book_number }}</td>
+                                <td>{{ borrow.book_name }}</td>
+                                <td>{{ borrow.reader_name }}</td>
+                                <td>{{ borrow.borrow_date }}</td>
+                                <td>{{ borrow.due_date }}</td>
+                                <td>
+                                    {% if borrow.is_renewed %}
+                                    <span class="badge badge-info">已续借</span>
+                                    {% else %}
+                                    <span class="badge badge-warning">未续借</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <button onclick="renewBook('{{ borrow.card_number }}', '{{ borrow.book_number }}')" 
+                                            class="btn btn-sm btn-info" 
+                                            {% if borrow.is_renewed %}disabled{% endif %}>
+                                        <i class="fas fa-redo"></i>续借
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 查询区域 -->
+        <div class="card bg-white shadow-lg">
+            <div class="card-body">
+                <h2 class="card-title text-orange-600 mb-4">
+                    <i class="fas fa-search mr-2"></i>借阅查询
+                </h2>
+                <div class="flex flex-col md:flex-row gap-4 mb-4">
+                    <div class="flex-1">
+                        <input type="text" id="queryCardNumber" placeholder="借阅卡号…" class="input input-bordered w-full">
+                    </div>
+                    <div class="flex-1">
+                        <input type="text" id="queryBookNumber" placeholder="图书编号…" class="input input-bordered w-full">
+                    </div>
+                    <button onclick="queryBorrows()" class="btn btn-primary">
+                        <i class="fas fa-search mr-2"></i>查询
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra w-full">
+                        <thead>
+                            <tr class="bg-orange-50">
+                                <th>借阅卡号</th>
+                                <th>图书编号</th>
+                                <th>书名</th>
+                                <th>读者姓名</th>
+                                <th>借书日期</th>
+                                <th>还书日期</th>
+                                <th>罚款金额</th>
+                                <th>状态</th>
+                            </tr>
+                        </thead>
+                        <tbody id="queryResults">
+                            <!-- 查询结果将在这里显示 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 借书表单提交
+        document.getElementById('borrowForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const borrowData = {
+                card_number: document.getElementById('borrow_card_number').value,
+                book_number: document.getElementById('borrow_book_number').value,
+                borrow_days: document.getElementById('borrow_days').value
+            };
+
+            fetch('/api/borrow', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(borrowData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('借书成功！');
+                    location.reload();
+                } else {
+                    alert('借书失败：' + data.message);
+                }
+            });
+        });
+
+        // 还书表单提交
+        document.getElementById('returnForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const returnData = {
+                card_number: document.getElementById('return_card_number').value,
+                book_number: document.getElementById('return_book_number').value,
+                return_status: document.getElementById('return_status').value
+            };
+
+            fetch('/api/return', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(returnData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('还书成功！');
+                    location.reload();
+                } else {
+                    alert('还书失败：' + data.message);
+                }
+            });
+        });
+
+        // 续借功能
+        function renewBook(cardNumber, bookNumber) {
+            if (confirm('确定要续借这本书吗？')) {
+                fetch('/api/renew', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        card_number: cardNumber,
+                        book_number: bookNumber
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('续借成功！');
+                        location.reload();
+                    } else {
+                        alert('续借失败：' + data.message);
+                    }
+                });
+            }
+        }
+
+        // 查询功能
+        function queryBorrows() {
+            const cardNumber = document.getElementById('queryCardNumber').value;
+            const bookNumber = document.getElementById('queryBookNumber').value;
+
+            fetch(`/api/borrows?card_number=${cardNumber}&book_number=${bookNumber}`)
+                .then(response => response.json())
+                .then(data => {
+                    const tbody = document.getElementById('queryResults');
+                    tbody.innerHTML = '';
+
+                    if (data.borrows && data.borrows.length > 0) {
+                        data.borrows.forEach(borrow => {
+                            const row = tbody.insertRow();
+                            row.innerHTML = `
+                                <td>${borrow.card_number}</td>
+                                <td>${borrow.book_number}</td>
+                                <td>${borrow.book_name}</td>
+                                <td>${borrow.reader_name}</td>
+                                <td>${borrow.borrow_date}</td>
+                                <td>${borrow.return_date || '未归还'}</td>
+                                <td>${borrow.fine || 0}</td>
+                                <td>${borrow.status}</td>
+                            `;
+                        });
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="8" class="text-center">没有找到相关记录</td></tr>';
+                    }
+                });
+        }
+
+
+    </script>
+</body>
+</html>

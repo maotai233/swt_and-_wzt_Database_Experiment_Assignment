@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>读者管理 - 图书管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.bootcdn.net/ajax/libs/daisyui/4.12.10/full.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-50">
+    <!-- 导航栏 -->
+    <div class="navbar" style="background-color:#7F5FCE; color:white;">
+        <div class="flex-1">
+            <a href="/admin/dashboard" class="btn btn-ghost normal-case text-xl">
+                <i class="fas fa-book mr-2"></i>图书管理系统 - 管理员
+            </a>
+        </div>
+        <div class="flex-none">
+            <ul class="menu menu-horizontal px-1">
+                <li class="mr-4"> <a href="/admin/dashboard" class="btn border-none"
+                        style="background-color: #d4c4e7; ">返回管理员面板</a></li>
+                <li class="mr-4"><a href="/admin/books" class="btn border-none"
+                        style="background-color: #d4c4e7; ">返回图书列表</a></li>
+                <li><a href="/logout" class="btn btn-error">退出登录</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <div class="card bg-white shadow-lg">
+                <div class="card-body">
+                    <h1 class="text-2xl font-bold text-gray-800 mb-6">
+                        <i class="fas fa-plus text-blue-600 mr-2"></i>添加新图书
+                    </h1>
+
+                    <!-- 显示Flash消息 -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ 'success' if category == 'success' else 'error' }} mb-4">
+                        <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' }}"></i>
+                        <span>{{ message }}</span>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+                    {% endwith %}
+
+                    <form method="POST" action="/admin/add_book" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- 图书编号 -->
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text">图书编号 *</span>
+                                </label>
+                                <input type="text" name="bno" placeholder="请输入图书编号" class="input input-bordered"
+                                    required>
+                                <label class="label">
+                                    <span class="label-text-alt text-gray-500">例如：B001</span>
+                                </label>
+                            </div>
+
+                            <!-- 书名 -->
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text">书名 *</span>
+                                </label>
+                                <input type="text" name="bname" placeholder="请输入书名" class="input input-bordered"
+                                    required>
+                            </div>
+
+                            <!-- 作者 -->
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text">作者 *</span>
+                                </label>
+                                <input type="text" name="bauthor" placeholder="请输入作者" class="input input-bordered"
+                                    required>
+                            </div>
+
+                            <!-- 图书类型 -->
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text">图书类型 *</span>
+                                </label>
+                                <select name="btno" class="select select-bordered" required>
+                                    <option value="">请选择图书类型</option>
+                                    {% for booktype in booktypes %}
+                                    <option value="{{ booktype[0] }}">{{ booktype[1] }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- 出版社 -->
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text">出版社 *</span>
+                                </label>
+                                <select name="pno" class="select select-bordered" required>
+                                    <option value="">请选择出版社</option>
+                                    {% for publisher in publishers %}
+                                    <option value="{{ publisher[0] }}">{{ publisher[1] }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- 价格 -->
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text">价格 *</span>
+                                </label>
+                                <input type="number" step="0.1" name="price" placeholder="请输入价格"
+                                    class="input input-bordered" required>
+                                <label class="label">
+                                    <span class="label-text-alt text-gray-500">单位：元</span>
+                                </label>
+                            </div>
+
+                            <!-- 出版时间 -->
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text">出版时间</span>
+                                </label>
+                                <input type="date" name="publish_time" class="input input-bordered">
+                            </div>
+
+                            <!-- 入库数量 -->
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text">入库数量 *</span>
+                                </label>
+                                <input type="number" name="total_num" placeholder="请输入入库数量" class="input input-bordered"
+                                    required min="1">
+                            </div>
+                        </div>
+
+                        <div class="form-control mt-6">
+                            <button type="submit" class="btn btn-primary"
+                                style="background-color: oklch; color: white;">
+                                <i class="fas fa-save mr-2"></i>添加图书
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="divider">或</div>
+
+                    <div class="text-center">
+                        <a href="/admin/books" class="btn btn-ghost">
+                            <i class="fas fa-arrow-left mr-2"></i>返回图书列表
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 设置出版时间为今天（默认值）
+        document.addEventListener('DOMContentLoaded', function () {
+            const today = new Date().toISOString().split('T')[0];
+            const publishTimeInput = document.querySelector('input[name="publish_time"]');
+            if (publishTimeInput && !publishTimeInput.value) {
+                publishTimeInput.value = today;
+            }
+        });
+    </script>
+</body>
+
+</html>

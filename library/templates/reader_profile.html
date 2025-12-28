@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图书管理 - 图书管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.bootcdn.net/ajax/libs/daisyui/4.12.10/full.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <!-- 导航栏 -->
+    <div class="navbar" style="background-color:#2563eb; color:white;">
+        <div class="flex-1">
+            <a href="/admin/dashboard" class="btn btn-ghost normal-case text-xl">
+                <i class="fas fa-book mr-2"></i>图书管理系统 - 读者
+            </a>
+        </div>
+        <div class="flex-none">
+            <ul class="menu menu-horizontal px-1">
+                <li class="mr-4">
+                    <a href="/reader/dashboard" class="btn border-none" style="background-color: #d4c4e7; ">返回读者面板</a></li>
+                </li>
+                <li><a href="/logout" class="btn btn-error">退出登录</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">
+                <i class="fas fa-user text-green-600 mr-3"></i>个人信息
+            </h1>
+            <p class="text-gray-600 mt-2">查看和修改您的个人信息</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- 个人信息 -->
+            <div class="card bg-white shadow-lg">
+                <div class="card-body">
+                    <h2 class="card-title text-gray-700 mb-6">
+                        <i class="fas fa-id-card mr-2"></i>基本信息
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="label">
+                                    <span class="label-text font-semibold">读者编号</span>
+                                </label>
+                                <div class="input input-bordered w-full" id="reader-number">--</div>
+                            </div>
+                            <div>
+                                <label class="label">
+                                    <span class="label-text font-semibold">借阅卡号</span>
+                                </label>
+                                <div class="input input-bordered w-full" id="card-number">--</div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="label">
+                                <span class="label-text font-semibold">姓名</span>
+                            </label>
+                            <div class="input input-bordered w-full" id="name">--</div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="label">
+                                    <span class="label-text font-semibold">性别</span>
+                                </label>
+                                <div class="input input-bordered w-full" id="gender">--</div>
+                            </div>
+                            <div>
+                                <label class="label">
+                                    <span class="label-text font-semibold">身份证号</span>
+                                </label>
+                                <div class="input input-bordered w-full" id="id-number">--</div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="label">
+                                <span class="label-text font-semibold">用户名</span>
+                            </label>
+                            <div class="input input-bordered w-full" id="username">--</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 借阅卡信息 -->
+            <div class="card bg-white shadow-lg">
+                <div class="card-body">
+                    <h2 class="card-title text-gray-700 mb-6">
+                        <i class="fas fa-credit-card mr-2"></i>借阅卡信息
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="label">
+                                <span class="label-text font-semibold">卡状态</span>
+                            </label>
+                            <div class="input input-bordered w-full" id="card-status">
+                                <span class="badge badge-success">正常</span>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="label">
+                                    <span class="label-text font-semibold">可借册数</span>
+                                </label>
+                                <div class="input input-bordered w-full" id="can-borrow">--</div>
+                            </div>
+                            <div>
+                                <label class="label">
+                                    <span class="label-text font-semibold">当前借阅</span>
+                                </label>
+                                <div class="input input-bordered w-full" id="borrowed-count">--</div>
+                            </div>
+                        </div>
+                                                
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="label">
+                                    <span class="label-text font-semibold">办卡日期</span>
+                                </label>
+                                <div class="input input-bordered w-full" id="card-date">--</div>
+                            </div>
+                            <div>
+                                <label class="label">
+                                    <span class="label-text font-semibold">续期日期</span>
+                                </label>
+                                <div class="input input-bordered w-full" id="renew-date">--</div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="label">
+                                <span class="label-text font-semibold">未缴罚款</span>
+                            </label>
+                            <div class="input input-bordered w-full" id="fine-amount">--</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 修改密码 -->
+        <div class="card bg-white shadow-lg mt-8">
+            <div class="card-body">
+                <h2 class="card-title text-gray-700 mb-6">
+                    <i class="fas fa-key mr-2"></i>修改密码
+                </h2>
+                
+                <div class="space-y-4 max-w-md">
+                    <div>
+                        <label class="label">
+                            <span class="label-text font-semibold">新密码</span>
+                        </label>
+                        <input type="password" id="new-password" class="input input-bordered w-full" 
+                               placeholder="输入新密码（至少6位）">
+                    </div>
+                    
+                    <div>
+                        <label class="label">
+                            <span class="label-text font-semibold">确认新密码</span>
+                        </label>
+                        <input type="password" id="confirm-password" class="input input-bordered w-full" 
+                               placeholder="再次输入新密码">
+                    </div>
+                    
+                    <div class="flex gap-4">
+                        <button onclick="updatePassword()" class="btn btn-primary border-none" style="background-color: oklch; color: rgb(255, 255, 255);">
+                            <i class="fas fa-save mr-2"></i>保存密码
+                        </button>
+                        <button onclick="resetPasswordForm()" class="btn btn-outline">
+                            <i class="fas fa-redo mr-2"></i>重置
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 页面加载时获取个人信息
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProfile();
+        });
+        
+        // 加载个人信息
+        function loadProfile() {
+            fetch('/api/reader/profile')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayProfile(data.profile);
+                    } else {
+                        alert('获取个人信息失败：' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('获取个人信息出错:', error);
+                    alert('获取个人信息出错，请稍后重试');
+                });
+        }
+        
+        // 显示个人信息
+        function displayProfile(profile) {
+            document.getElementById('reader-number').textContent = profile.reader_number;
+            document.getElementById('card-number').textContent = profile.card_number;
+            document.getElementById('name').textContent = profile.name;
+            document.getElementById('gender').textContent = profile.gender;
+            document.getElementById('id-number').textContent = profile.id_number;
+            document.getElementById('username').textContent = profile.username;
+            
+            document.getElementById('card-status').innerHTML = 
+                profile.card_status === '正常' ? 
+                '<span class="badge badge-success">正常</span>' : 
+                '<span class="badge badge-error">挂失</span>';
+            
+            document.getElementById('can-borrow').textContent = profile.can_borrow_books;
+            document.getElementById('borrowed-count').textContent = profile.borrowed_books;
+            document.getElementById('card-date').textContent = profile.card_date;
+            document.getElementById('renew-date').textContent = profile.renew_date || '--';
+            document.getElementById('fine-amount').textContent = `¥${profile.fine.toFixed(2)}`;
+        }
+        
+        // 更新密码
+        function updatePassword() {
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            
+            if (!newPassword || !confirmPassword) {
+                alert('请填写新密码和确认密码');
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                alert('密码长度至少6位');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                alert('两次输入的密码不一致');
+                return;
+            }
+            
+            if (!confirm('确定要修改密码吗？')) {
+                return;
+            }
+            
+            fetch('/api/reader/profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    password: newPassword
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('密码修改成功！');
+                    resetPasswordForm();
+                } else {
+                    alert('密码修改失败：' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('修改密码出错:', error);
+                alert('修改密码出错，请稍后重试');
+            });
+        }
+        
+        // 重置密码表单
+        function resetPasswordForm() {
+            document.getElementById('new-password').value = '';
+            document.getElementById('confirm-password').value = '';
+        }
+    </script>
+</body>
+</html>

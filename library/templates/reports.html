@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>查询统计 - 图书管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.bootcdn.net/ajax/libs/daisyui/4.12.10/full.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="bg-gray-50">
+    <!-- 导航栏 -->
+    <div class="navbar" style="background-color:#7F5FCE; color:white;">
+        <div class="flex-1">
+            <a href="/admin/dashboard" class="btn btn-ghost normal-case text-xl">
+                <i class="fas fa-book mr-2"></i>图书管理系统 - 管理员
+            </a>
+        </div>
+        <div class="flex-none">
+            <ul class="menu menu-horizontal px-1">
+                <li class="mr-4"> <a href="/admin/dashboard" class="btn border-none"
+                        style="background-color: #d4c4e7; ">返回管理员面板</a></li>
+                <li><a href="/logout" class="btn btn-error">退出登录</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">
+                <i class="fas fa-chart-bar text-indigo-600 mr-3"></i>查询统计
+            </h1>
+            <p class="text-gray-600 mt-2">查看图书馆各项统计信息和报表</p>
+        </div>
+
+        <!-- 统计概览 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="card bg-white shadow-lg">
+                <div class="card-body">
+                    <h2 class="text-2xl font-bold text-blue-600">{{ total_books }}</h2>
+                    <p class="text-gray-600">图书总数</p>
+                </div>
+            </div>
+            <div class="card bg-white shadow-lg">
+                <div class="card-body">
+                    <h2 class="text-2xl font-bold text-green-600">{{ total_readers }}</h2>
+                    <p class="text-gray-600">读者总数</p>
+                </div>
+            </div>
+            <div class="card bg-white shadow-lg">
+                <div class="card-body">
+                    <h2 class="text-2xl font-bold text-orange-600">{{ active_borrows }}</h2>
+                    <p class="text-gray-600">在借图书</p>
+                </div>
+            </div>
+            <div class="card bg-white shadow-lg">
+                <div class="card-body">
+                    <h2 class="text-2xl font-bold text-red-600">{{ overdue_books }}</h2>
+                    <p class="text-gray-600">逾期图书</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 图表区域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- 月度借阅统计 -->
+            <div class="card bg-white shadow-lg">
+                <div class="card-body">
+                    <h2 class="card-title text-blue-600 mb-4">
+                        <i class="fas fa-calendar-alt mr-2"></i>月度借阅统计
+                    </h2>
+                    <div class="h-64">
+                        <canvas id="monthlyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 借阅时间段分析 -->
+            <div class="card bg-white shadow-lg">
+                <div class="card-body">
+                    <h2 class="card-title text-purple-600 mb-4">
+                        <i class="fas fa-clock mr-2"></i>借阅时间段分析
+                    </h2>
+                    <div class="h-64">
+                        <canvas id="timeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- 热门图书排行 -->
+            <div class="card bg-white shadow-lg">
+                <div class="card-body">
+                    <h2 class="card-title text-orange-600 mb-4">
+                        <i class="fas fa-fire mr-2"></i>热门图书排行
+                    </h2>
+                    <div class="overflow-x-auto">
+                        <table class="table table-zebra w-full">
+                            <thead>
+                                <tr class="bg-orange-50">
+                                    <th>排名</th>
+                                    <th>图书名称</th>
+                                    <th>作者</th>
+                                    <th>借阅次数</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if popular_books %}
+                                {% for book in popular_books %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>{{ book[0] }}</td>
+                                    <td>{{ book[1] }}</td>
+                                    <td>{{ book[2] }}</td>
+                                </tr>
+                                {% endfor %}
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-4">
+                                        <p class="text-gray-500">暂无数据</p>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 图书分类统计 -->
+            <div class="card bg-white shadow-lg">
+                <div class="card-body">
+                    <h2 class="card-title text-green-600 mb-4">
+                        <i class="fas fa-th-large mr-2"></i>图书分类统计
+                    </h2>
+                    <div class="overflow-x-auto">
+                        <table class="table table-zebra w-full">
+                            <thead>
+                                <tr class="bg-green-50">
+                                    <th>图书类型</th>
+                                    <th>图书数量</th>
+                                    <th>占比</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if book_type_stats %}
+                                {% for stat in book_type_stats %}
+                                <tr>
+                                    <td>{{ stat[0] }}</td>
+                                    <td>{{ stat[1] }}</td>
+                                    <td>
+                                        <div class="flex items-center">
+                                            <div class="flex-1">
+                                                <progress class="progress progress-success" value="{{ stat[2] }}"
+                                                    max="100"></progress>
+                                            </div>
+                                            <span class="ml-2">{{ stat[2] }}%</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% else %}
+                                <tr>
+                                    <td colspan="3" class="text-center py-4">
+                                        <p class="text-gray-500">暂无数据</p>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 报表导出 -->
+        <div class="card bg-white shadow-lg mt-8">
+            <div class="card-body">
+                <h2 class="card-title text-red-600 mb-4">
+                    <i class="fas fa-file-export mr-2"></i>报表导出
+                </h2>
+                <div class="flex flex-wrap gap-4">
+                    <button onclick="exportReport('borrow')" class="btn btn-primary">
+                        <i class="fas fa-download mr-2"></i>导出借阅报表
+                    </button>
+                    <button onclick="exportReport('book')" class="btn btn-success">
+                        <i class="fas fa-download mr-2"></i>导出图书报表
+                    </button>
+                    <button onclick="exportReport('reader')" class="btn btn-warning">
+                        <i class="fas fa-download mr-2"></i>导出读者报表
+                    </button>
+                    <button onclick="refreshChartData()" class="btn btn-outline">
+                        <i class="fas fa-sync-alt mr-2"></i>刷新图表数据
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // 月度统计图表
+        const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+        let monthlyChart;
+
+        // 借阅时间段分析图表
+        const timeCtx = document.getElementById('timeChart').getContext('2d');
+        let timeChart;
+
+        // 页面加载时初始化图表
+        document.addEventListener('DOMContentLoaded', function () {
+            initCharts();
+        });
+
+        function initCharts() {
+            // 初始化月度图表
+            const monthlyLabels = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+            const monthlyData = {% if monthly_data %} {{ monthly_data | tojson | safe }} {% else %} [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] {% endif %};
+
+            monthlyChart = new Chart(monthlyCtx, {
+                type: 'line',
+                data: {
+                    labels: monthlyLabels,
+                    datasets: [{
+                        label: '借阅数量',
+                        data: monthlyData,
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        borderColor: 'rgb(99, 102, 241)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '借阅数量'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: '月份'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+
+            // 初始化时间段图表
+            const timeLabels = {% if time_labels %} {{ time_labels | tojson | safe }} {% else %} ['上午 (6-12点)', '下午 (12-18点)', '晚上 (18-24点)'] {% endif %};
+            const timeData = {% if time_data %} {{ time_data | tojson | safe }} {% else %} [0, 0, 0] {% endif %};
+
+            const backgroundColors = [
+                'rgba(147, 51, 234, 0.7)',
+                'rgba(59, 130, 246, 0.7)',
+                'rgba(16, 185, 129, 0.7)',
+                'rgba(245, 158, 11, 0.7)'
+            ];
+
+            const borderColors = [
+                'rgb(147, 51, 234)',
+                'rgb(59, 130, 246)',
+                'rgb(16, 185, 129)',
+                'rgb(245, 158, 11)'
+            ];
+
+            timeChart = new Chart(timeCtx, {
+                type: 'bar',
+                data: {
+                    labels: timeLabels,
+                    datasets: [{
+                        label: '借阅次数',
+                        data: timeData,
+                        backgroundColor: backgroundColors.slice(0, timeLabels.length),
+                        borderColor: borderColors.slice(0, timeLabels.length),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '借阅次数'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // 导出报表
+        function exportReport(type) {
+            let url = '';
+            let filename = '';
+
+            switch (type) {
+                case 'borrow':
+                    url = '/api/reports/borrow';
+                    filename = '借阅报表.csv';
+                    break;
+                case 'book':
+                    url = '/api/reports/books';
+                    filename = '图书报表.csv';
+                    break;
+                case 'reader':
+                    url = '/api/reports/readers';
+                    filename = '读者报表.csv';
+                    break;
+            }
+
+            fetch(url)
+                .then(response => response.blob())
+                .then(blob => {
+                    // 创建下载链接
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                })
+                .catch(error => {
+                    alert('导出失败：' + error.message);
+                });
+        }
+
+        // 刷新图表数据
+        function refreshChartData() {
+            fetch('/api/reports/chart-data')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // 更新月度图表
+                        if (monthlyChart && data.monthly_data) {
+                            monthlyChart.data.datasets[0].data = data.monthly_data;
+                            monthlyChart.update();
+                        }
+
+                        // 更新时间段图表
+                        if (timeChart && data.time_data) {
+                            timeChart.data.datasets[0].data = data.time_data;
+                            timeChart.update();
+                        }
+
+                        alert('图表数据已刷新');
+                    }
+                })
+                .catch(error => {
+                    console.error('刷新图表数据出错:', error);
+                    alert('刷新数据失败，请稍后重试');
+                });
+        }
+    </script>
+</body>
+
+</html>

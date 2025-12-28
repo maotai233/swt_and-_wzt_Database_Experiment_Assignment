@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>读者面板 - 图书管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.bootcdn.net/ajax/libs/daisyui/4.12.10/full.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-50">
+    <!-- 通知容器 -->
+    <div id="notifications-container" style="position: fixed; top: 80px; right: 20px; z-index: 9998; max-width: 400px;">
+    </div>
+
+    <!-- 导航栏 -->
+    <div class="navbar" style="background-color:#2563eb; color:white;">
+        <div class="flex-1">
+            <a class="btn btn-ghost normal-case text-xl">
+                <i class="fas fa-book mr-2"></i>图书管理系统 - 读者
+            </a>
+        </div>
+        <div class="flex-none">
+            <ul class="menu menu-horizontal px-1">
+                <li><a href="/logout" class="btn border-none" style="background-color: #E4080A; color: black;">退出登录</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <!-- 欢迎信息 -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">
+                <i class="fas fa-user text-green-600 mr-3"></i>读者面板
+            </h1>
+            <p class="text-gray-600 mt-2">欢迎回来，{{ username }}</p>
+        </div>
+
+        <!-- 读者信息卡片 -->
+        <div class="card bg-white shadow-lg mb-8">
+            <div class="card-body">
+                <h2 class="card-title text-green-600">
+                    <i class="fas fa-id-card mr-2"></i>我的信息
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-600">借阅卡号</p>
+                        <p class="text-lg font-semibold">{{ reader_info.card_number }}</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-600">可借册数</p>
+                        <p class="text-lg font-semibold">{{ reader_info.max_books }}</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-600">已借册数</p>
+                        <p class="text-lg font-semibold" id="borrowed-books-count">{{ reader_info.borrowed_books }}</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-600">未交罚款</p>
+                        <p class="text-lg font-semibold text-red-600" id="unpaid-fine-amount">¥{{ reader_info.unpaid_fine }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 借阅状态卡片 -->
+        <div class="card bg-white shadow-lg mb-8">
+            <div class="card-body">
+                <h2 class="card-title text-blue-600">
+                    <i class="fas fa-clipboard-check mr-2"></i>借阅状态
+                </h2>
+                <div id="borrow-status-container">
+                    <div class="text-center py-4">
+                        <div class="loading loading-spinner loading-lg"></div>
+                        <p class="text-gray-500 mt-2">正在加载借阅状态...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 功能菜单 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- 图书查询 -->
+            <div class="card bg-white shadow-lg hover:shadow-xl transition-shadow">
+                <div class="card-body">
+                    <h2 class="card-title text-blue-600">
+                        <i class="fas fa-search mr-2"></i>图书查询
+                    </h2>
+                    <p class="text-gray-600">搜索和浏览图书馆的图书</p>
+                    <div class="card-actions justify-end mt-4">
+                        <a href="/reader/search" class="btn btn-primary  border-none"
+                            style="background-color: #2563eb; color: white;">进入</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 我的借阅 -->
+            <div class="card bg-white shadow-lg hover:shadow-xl transition-shadow">
+                <div class="card-body">
+                    <h2 class="card-title text-green-600">
+                        <i class="fas fa-hand-holding mr-2"></i>我的借阅
+                    </h2>
+                    <p class="text-gray-600">查看当前借阅的图书和历史记录</p>
+                    <div class="card-actions justify-end mt-4">
+                        <a href="/reader/borrows" class="btn btn-primary  border-none"
+                            style="background-color: #16a34a; color: white;">进入</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 罚款缴费 -->
+            <div class="card bg-white shadow-lg hover:shadow-xl transition-shadow">
+                <div class="card-body">
+                    <h2 class="card-title text-orange-600">
+                        <i class="fas fa-money-bill mr-2"></i>罚款缴费
+                    </h2>
+                    <p class="text-gray-600">查看和缴纳罚款</p>
+                    <div class="card-actions justify-end mt-4">
+                        <a href="/reader/fines" class="btn btn-primary  border-none"
+                            style="background-color: #ea580c; color: white;">进入</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 个人信息 -->
+            <div class="card bg-white shadow-lg hover:shadow-xl transition-shadow">
+                <div class="card-body">
+                    <h2 class="card-title text-purple-600">
+                        <i class="fas fa-user-edit mr-2"></i>个人信息
+                    </h2>
+                    <p class="text-gray-600">查看和修改个人信息</p>
+                    <div class="card-actions justify-end mt-4">
+                        <a href="/reader/profile" class="btn btn-primary  border-none"
+                            style="background-color: #9333ea; color: white;">进入</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 借阅卡管理 -->
+            <div class="card bg-white shadow-lg hover:shadow-xl transition-shadow">
+                <div class="card-body">
+                    <h2 class="card-title text-red-600">
+                        <i class="fas fa-bookmark mr-2"></i>借阅卡管理
+                    </h2>
+                    <p class="text-gray-600">管理借阅卡状态和续期</p>
+                    <div class="card-actions justify-end mt-4">
+                        <a href="/reader/card" class="btn btn-primary  border-none"
+                            style="background-color: #dc2626; color: white;">进入</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 借阅统计 -->
+            <div class="card bg-white shadow-lg hover:shadow-xl transition-shadow">
+                <div class="card-body">
+                    <h2 class="card-title text-indigo-600">
+                        <i class="fas fa-chart-bar mr-2"></i>借阅统计
+                    </h2>
+                    <p class="text-gray-600">查看个人借阅统计信息</p>
+                    <div class="card-actions justify-end mt-4">
+                        <a href="/reader/stats" class="btn btn-primary border-none"
+                            style="background-color: #4f46e5; color: white;">进入</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 最新公告 -->
+        <div class="card bg-white shadow-lg mt-8">
+            <div class="card-body">
+                <h2 class="card-title text-blue-600">
+                    <i class="fas fa-bullhorn mr-2"></i>最新公告
+                </h2>
+                <div class="space-y-3">
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <p class="font-semibold text-blue-800">系统更新</p>
+                        <p class="text-gray-600">图书管理系统已升级，新增在线查询功能。</p>
+                        <p class="text-sm text-gray-500 mt-1">2025-12-26</p>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <p class="font-semibold text-green-800">借阅规则更新</p>
+                        <p class="text-gray-600">借阅期限调整为30天，可续借一次。</p>
+                        <p class="text-sm text-gray-500 mt-1">2025-12-26</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 统一的更新函数
+        function updateAllBorrowData() {
+            // 同时更新借阅统计和借阅状态
+            updateBorrowStats();
+            loadBorrowStatus();
+        }
+
+        // 更新借阅统计
+        function updateBorrowStats() {
+            fetch('/api/reader/borrows')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // 更新已借册数显示
+                        const borrowedCount = document.getElementById('borrowed-books-count');
+                        if (borrowedCount) {
+                            borrowedCount.textContent = data.stats.active_borrows;
+                        }
+
+                        // 更新未交罚款显示（我的信息区域）
+                        const unpaidFineElement = document.getElementById('unpaid-fine-amount');
+                        if (unpaidFineElement) {
+                            unpaidFineElement.textContent = '¥' + data.stats.total_fine.toFixed(2);
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('更新借阅统计出错:', error);
+                });
+        }
+
+        // 全局借阅函数（无确认弹窗）
+        window.requestBorrow = function (bookNumber, bookName) {
+            // 直接借阅，不显示确认弹窗
+            const borrowBtn = event.target;
+            const originalText = borrowBtn.innerHTML;
+
+            // 显示加载状态
+            borrowBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>借阅中...';
+            borrowBtn.disabled = true;
+
+            // 调用借阅API
+            fetch('/api/reader/borrow', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    book_number: bookNumber
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // 显示成功消息（轻量级提示，不中断用户）
+                        showToast('success', `借阅成功！《${bookName}》`);
+
+                        // 更新页面上的图书库存状态
+                        updateBookStock(bookNumber);
+
+                        // 更新借阅统计
+                        updateAllBorrowData();
+
+                        // 显示详细的借阅成功信息
+                        showBorrowSuccessNotification(data.data);
+                    } else {
+                        showToast('error', '借阅失败：' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('借阅请求出错:', error);
+                    showToast('error', '借阅请求出错，请稍后重试');
+                })
+                .finally(() => {
+                    // 恢复按钮状态
+                    setTimeout(() => {
+                        borrowBtn.innerHTML = originalText;
+                        borrowBtn.disabled = false;
+                    }, 1000);
+                });
+        }
+
+        // 显示Toast通知
+        function showToast(type, message) {
+            // 创建toast元素
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+
+            const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+            const bgColor = type === 'success' ? 'bg-green-100 border-green-400' : 'bg-red-100 border-red-400';
+            const textColor = type === 'success' ? 'text-green-800' : 'text-red-800';
+
+            toast.innerHTML = `
+                <div class="alert ${bgColor} ${textColor} border-l-4 border-solid shadow-lg">
+                    <div>
+                        <i class="fas ${icon} mr-2"></i>
+                        <span>${message}</span>
+                    </div>
+                </div>
+            `;
+
+            // 添加到页面
+            document.body.appendChild(toast);
+
+            // 设置样式
+            toast.style.position = 'fixed';
+            toast.style.top = '20px';
+            toast.style.right = '20px';
+            toast.style.zIndex = '9999';
+            toast.style.minWidth = '300px';
+            toast.style.maxWidth = '400px';
+
+            // 3秒后自动消失
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // 显示借阅成功通知
+        function showBorrowSuccessNotification(borrowData) {
+            // 创建通知元素
+            const notification = document.createElement('div');
+            notification.className = 'notification notification-success';
+
+            notification.innerHTML = `
+                <div class="alert alert-success shadow-lg mb-2">
+                    <div>
+                        <i class="fas fa-check-circle"></i>
+                        <div>
+                            <h3 class="font-bold">借阅成功！</h3>
+                            <div class="text-sm">
+                                <p class="mb-1"><strong>《${borrowData.book_name}》</strong></p>
+                                <p>借阅时间：${borrowData.borrow_time}</p>
+                                <p>应还日期：${borrowData.due_date}</p>
+                                <p class="mt-2 text-xs">当前借阅：${borrowData.borrowed_count}/${borrowData.max_borrow}本</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex-none">
+                        <button onclick="this.closest('.notification').remove()" class="btn btn-sm btn-ghost">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // 添加到页面
+            const container = document.getElementById('notifications-container');
+            if (!container) {
+                // 如果不存在通知容器，创建一个
+                const newContainer = document.createElement('div');
+                newContainer.id = 'notifications-container';
+                newContainer.style.position = 'fixed';
+                newContainer.style.top = '80px';
+                newContainer.style.right = '20px';
+                newContainer.style.zIndex = '9998';
+                newContainer.style.maxWidth = '400px';
+                document.body.appendChild(newContainer);
+                newContainer.appendChild(notification);
+            } else {
+                container.appendChild(notification);
+            }
+
+            // 5秒后自动消失
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+
+        // 显示借阅成功模态框
+        function showBorrowSuccessModal(borrowData) {
+            // 创建模态框
+            const modal = document.createElement('div');
+            modal.className = 'modal modal-open';
+            modal.innerHTML = `
+                <div class="modal-box max-w-md">
+                    <h3 class="font-bold text-lg text-green-600">
+                        <i class="fas fa-check-circle mr-2"></i>借阅成功！
+                    </h3>
+                    <div class="py-4">
+                        <div class="bg-green-50 p-4 rounded-lg mb-4">
+                            <p class="font-semibold">《${borrowData.book_name}》</p>
+                            <p class="text-sm text-gray-600 mt-1">借阅时间：${borrowData.borrow_time}</p>
+                            <p class="text-sm text-gray-600">应还日期：${borrowData.due_date}</p>
+                        </div>
+                        <div class="alert alert-info">
+                            <div>
+                                <i class="fas fa-info-circle"></i>
+                                <span>当前借阅：${borrowData.borrowed_count}/${borrowData.max_borrow}本</span>
+                            </div>
+                        </div>
+                        <div class="text-sm text-gray-600 mt-4">
+                            <p>温馨提示：</p>
+                            <ul class="list-disc pl-5 mt-2">
+                                <li>请按时归还图书，逾期将产生罚款</li>
+                                <li>可在"我的借阅"页面查看借阅记录</li>
+                                <li>如需续借，请在到期前办理</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="modal-action">
+                        <button onclick="this.closest('.modal').remove()" class="btn btn-primary">确认</button>
+                        <a href="/reader/borrows" class="btn btn-outline">查看我的借阅</a>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            // 5秒后自动关闭
+            setTimeout(() => {
+                if (modal.parentNode) {
+                    modal.remove();
+                }
+            }, 5000);
+        }
+
+        // 更新图书库存显示
+        function updateBookStock(bookNumber) {
+            // 找到页面中对应的图书卡片
+            const bookCards = document.querySelectorAll('.book-card');
+            bookCards.forEach(card => {
+                if (card.dataset.bookNumber === bookNumber) {
+                    const stockElement = card.querySelector('.book-stock');
+                    const borrowButton = card.querySelector('.borrow-btn');
+                    
+                    if (stockElement) {
+                        // 减少库存显示
+                        const currentStock = parseInt(stockElement.textContent) || 0;
+                        const newStock = currentStock - 1;
+                        stockElement.textContent = newStock + '本';
+                        
+                        // 更新库存状态
+                        if (newStock <= 0) {
+                            stockElement.classList.remove('text-green-600');
+                            stockElement.classList.add('text-red-600');
+                            
+                            if (borrowButton) {
+                                borrowButton.disabled = true;
+                                borrowButton.innerHTML = '<i class="fas fa-ban mr-2"></i>暂无库存';
+                                borrowButton.classList.remove('btn-success');
+                                borrowButton.classList.add('btn-disabled');
+                            }
+                        } else {
+                            stockElement.classList.remove('text-red-600');
+                            stockElement.classList.add('text-green-600');
+                        }
+                    }
+                }
+            });
+        }
+
+        // 加载借阅状态
+        function loadBorrowStatus() {
+            fetch('/api/reader/borrow/status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayBorrowStatus(data);
+                        
+                        // 同时更新"我的信息"区域的罚款（作为备份，确保同步）
+                        updateReaderInfoFromStatus(data.status);
+                    }
+                })
+                .catch(error => {
+                    console.error('加载借阅状态出错:', error);
+                });
+        }
+
+        // 从借阅状态更新读者信息
+        function updateReaderInfoFromStatus(status) {
+            // 更新已借册数
+            const borrowedCountElement = document.getElementById('borrowed-books-count');
+            if (borrowedCountElement && status.max_borrow !== undefined && status.remaining_quota !== undefined) {
+                borrowedCountElement.textContent = status.max_borrow - status.remaining_quota;
+            }
+            
+            // 更新未交罚款
+            const unpaidFineElement = document.getElementById('unpaid-fine-amount');
+            if (unpaidFineElement && status.unpaid_fine !== undefined) {
+                unpaidFineElement.textContent = '¥' + status.unpaid_fine.toFixed(2);
+            }
+        }
+
+        // 显示借阅状态
+        function displayBorrowStatus(data) {
+            const container = document.getElementById('borrow-status-container');
+            const status = data.status;
+
+            let statusHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-600">借阅卡状态</p>
+                        <p class="text-lg font-semibold ${status.card_status === '正常' ? 'text-green-600' : 'text-red-600'}">
+                            ${status.card_status}
+                        </p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-600">可借阅额度</p>
+                        <p class="text-lg font-semibold">${status.remaining_quota}/${status.max_borrow}</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-600">未缴罚款</p>
+                        <p class="text-lg font-semibold ${status.unpaid_fine > 0 ? 'text-red-600' : 'text-green-600'}">
+                            ¥${status.unpaid_fine.toFixed(2)}
+                        </p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-600">借阅权限</p>
+                        <p class="text-lg font-semibold ${status.can_borrow ? 'text-green-600' : 'text-red-600'}">
+                            ${status.can_borrow ? '正常' : '受限'}
+                        </p>
+                    </div>
+                </div>
+            `;
+
+            // 添加最近借阅记录
+            if (data.recent_borrows && data.recent_borrows.length > 0) {
+                statusHTML += `
+                    <div class="mt-6">
+                        <h4 class="font-bold text-gray-700 mb-2">最近借阅记录</h4>
+                        <div class="overflow-x-auto">
+                            <table class="table table-zebra w-full text-sm">
+                                <thead>
+                                    <tr>
+                                        <th>图书名称</th>
+                                        <th>借阅时间</th>
+                                        <th>应还日期</th>
+                                        <th>状态</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                `;
+
+                data.recent_borrows.forEach(borrow => {
+                    const statusClass = borrow.is_overdue ? 'badge-error' :
+                        borrow.status === '在借' ? 'badge-success' : 'badge-info';
+                    statusHTML += `
+                        <tr>
+                            <td>${borrow.book_name}</td>
+                            <td>${borrow.borrow_time ? borrow.borrow_time.split(' ')[0] : '--'}</td>
+                            <td>${borrow.due_date || '--'}</td>
+                            <td><span class="badge ${statusClass}">${borrow.status}</span></td>
+                        </tr>
+                    `;
+                });
+
+                statusHTML += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = statusHTML;
+        }
+
+        // 在页面加载时调用
+        document.addEventListener('DOMContentLoaded', function () {
+            updateAllBorrowData();
+        });
+    </script>
+
+    <!-- 页脚 -->
+    <footer class="footer footer-center p-4 text-white mt-16" style="background-color: #2563eb;">
+        <div>
+            <p>图书管理系统 - 读者版本</p>
+            <p class="text-sm text-white-400">数据库系统原理及实验</p>
+            </p>
+        </div>
+    </footer>
+</body>
+
+</html>

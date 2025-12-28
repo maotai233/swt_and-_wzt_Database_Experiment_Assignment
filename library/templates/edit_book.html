@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>编辑图书 - 图书管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.bootcdn.net/ajax/libs/daisyui/4.12.10/full.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+  <!-- 导航栏 -->
+  <div class="navbar" style="background-color:#7F5FCE; color:white;">
+    <div class="flex-1">
+      <a href="/admin/dashboard" class="btn btn-ghost normal-case text-xl">
+        <i class="fas fa-book mr-2"></i>图书管理系统 - 管理员
+      </a>
+    </div>
+    <div class="flex-none">
+      <ul class="menu menu-horizontal px-1">
+        <li class="mr-4"> <a href="/admin/dashboard" class="btn border-none" style="background-color: #d4c4e7; ">返回管理员面板</a></li>
+        <li class="mr-4"><a href="/admin/books" class="btn border-none" style="background-color: #d4c4e7; ">返回图书列表</a></li>
+        <li><a href="/logout" class="btn btn-error">退出登录</a></li>
+      </ul>
+    </div>
+  </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-2xl mx-auto">
+            <div class="card bg-white shadow-lg">
+                <div class="card-body">
+                    <h1 class="text-2xl font-bold text-gray-800 mb-6">
+                        <i class="fas fa-edit text-blue-600 mr-2"></i>编辑图书
+                    </h1>
+                    
+                    <div id="bookInfo">
+                        <!-- 图书信息将通过JavaScript加载 -->
+                        <div class="text-center py-8">
+                            <div class="loading loading-spinner loading-lg"></div>
+                            <p class="mt-4 text-gray-600">正在加载图书信息...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 从URL获取图书编号
+        const pathSegments = window.location.pathname.split('/');
+        const bookNumber = pathSegments[pathSegments.length - 1];
+        
+        // 加载图书信息
+        fetch(`/api/books/${bookNumber}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.book) {
+                    const book = data.book;
+                    
+                    document.getElementById('bookInfo').innerHTML = `
+                        <form id="editBookForm" class="space-y-4">
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text">图书编号</span>
+                                </label>
+                                <input type="text" value="${book.BNo}" class="input input-bordered" readonly>
+                            </div>
+                            
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text">书名</span>
+                                </label>
+                                <input type="text" id="bookName" value="${book.BName}" class="input input-bordered" required>
+                            </div>
+                            
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text">作者</span>
+                                </label>
+                                <input type="text" id="author" value="${book.BAuthor}" class="input input-bordered" required>
+                            </div>
+                            
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text">价格</span>
+                                </label>
+                                <input type="number" step="0.01" id="price" value="${book.Price}" class="input input-bordered" required>
+                            </div>
+                            
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text">总数量</span>
+                                </label>
+                                <input type="number" id="totalNum" value="${book.TotalNum}" class="input input-bordered" required>
+                            </div>
+                            
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text">现存量</span>
+                                </label>
+                                <input type="number" id="biomass" value="${book.Biomass}" class="input input-bordered" required>
+                            </div>
+                            
+                            <div class="form-control mt-6" >
+                                <button type="submit" class="btn btn-primary" style="color:white">保存修改</button>
+                            </div>
+                        </form>
+                    `;
+                    
+                    // 添加表单提交事件
+                    document.getElementById('editBookForm').addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        
+                        const updatedData = {
+                            BName: document.getElementById('bookName').value,
+                            BAuthor: document.getElementById('author').value,
+                            Price: document.getElementById('price').value,
+                            TotalNum: document.getElementById('totalNum').value,
+                            Biomass: document.getElementById('biomass').value
+                        };
+                        
+                        fetch(`/api/books/${bookNumber}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(updatedData)
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert('修改成功！');
+                                window.location.href = '/admin/books';
+                            } else {
+                                alert('修改失败：' + (data.message || '未知错误'));
+                            }
+                        });
+                    });
+                } else {
+                    document.getElementById('bookInfo').innerHTML = `
+                        <div class="alert alert-error">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>加载图书信息失败：${data.message || '图书不存在'}</span>
+                        </div>
+                        <div class="mt-4">
+                            <a href="/admin/books" class="btn btn-primary">返回图书列表</a>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                document.getElementById('bookInfo').innerHTML = `
+                    <div class="alert alert-error">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>加载图书信息失败：网络错误</span>
+                    </div>
+                    <div class="mt-4">
+                        <a href="/admin/books" class="btn btn-primary">返回图书列表</a>
+                    </div>
+                `;
+                console.error('加载图书信息出错:', error);
+            });
+    </script>
+</body>
+</html>

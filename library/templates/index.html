@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图书管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.bootcdn.net/ajax/libs/daisyui/4.12.10/full.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <!-- 导航栏 -->
+    <div class="navbar" style="background-color:#7F5FCE; color:white;">
+        <div class="flex-1">
+            <a href="/" class="btn btn-ghost normal-case text-xl">
+                <i class="fas fa-book mr-2"></i>图书管理系统
+            </a>
+        </div>
+        <div class="flex-none">
+            <ul class="menu menu-horizontal px-1">
+                <li><a href="/register" class="btn btn-success mr-2 border-none" style="background-color:#31b9ef; color:white;">读者注册</a></li>
+                <li><a href="/login" class="btn btn-primary border-none" style="background-color:#3abf31; color:white;">登录系统</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 主要内容 -->
+    <div class="hero min-h-screen bg-base-200">
+        <div class="hero-content text-center">
+            <div class="max-w-md">
+                <h1 class="text-5xl font-bold">
+                    <i class="fas fa-university text-blue-600 mr-3"></i>图书管理系统
+                </h1>
+                <p class="py-6 text-lg text-gray-600">
+                    现代化的图书管理解决方案，提供图书信息管理、借阅管理、读者服务等完整功能。支持管理员和读者两种角色，实现图书管理的信息化和智能化。
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+                    <div class="card bg-white shadow-lg">
+                        <div class="card-body">
+                            <h2 class="card-title text-blue-600">
+                                <i class="fas fa-user-shield"></i>管理员功能
+                            </h2>
+                            <ul class="text-left text-sm space-y-1">
+                                <li>• 图书信息管理</li>
+                                <li>• 读者信息管理</li>
+                                <li>• 借阅记录管理</li>
+                                <li>• 图书入库管理</li>
+                                <li>• 报损管理</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="card bg-white shadow-lg">
+                        <div class="card-body">
+                            <h2 class="card-title text-green-600">
+                                <i class="fas fa-user"></i>读者功能
+                            </h2>
+                            <ul class="text-left text-sm space-y-1">
+                                <li>• 图书查询</li>
+                                <li>• 借阅记录查看</li>
+                                <li>• 个人信息管理</li>
+                                <li>• 在线借阅</li>
+                                <li>• 罚款缴费</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-8">
+                    <a href="/login" class="btn btn-primary btn-lg border-none" style="background-color:#2563eb; color:white;">
+                        <i class="fas fa-sign-in-alt mr-2"></i>开始使用
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="footer footer-center p-4 text-white mt-16" style="background-color: #7F5FCE;">
+        <div>
+            <p>图书管理系统 - 管理员版本</p>
+            <p class="text-sm text-white-400" >数据库系统原理及实验</p>
+            </p>
+        </div>
+    </footer>
+</body>
+</html>

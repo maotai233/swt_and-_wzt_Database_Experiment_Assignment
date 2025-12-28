@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图书管理 - 图书管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.bootcdn.net/ajax/libs/daisyui/4.12.10/full.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <!-- 导航栏 -->
+    <div class="navbar" style="background-color:#2563eb; color:white;">
+        <div class="flex-1">
+            <a href="/admin/dashboard" class="btn btn-ghost normal-case text-xl">
+                <i class="fas fa-book mr-2"></i>图书管理系统 - 读者
+            </a>
+        </div>
+        <div class="flex-none">
+            <ul class="menu menu-horizontal px-1">
+                <li class="mr-4">
+                    <a href="/reader/dashboard" class="btn border-none" style="background-color: #d4c4e7; ">返回读者面板</a></li>
+                </li>
+                <li><a href="/logout" class="btn btn-error">退出登录</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">
+                <i class="fas fa-book-open text-green-600 mr-3"></i>我的借阅
+            </h1>
+            <p class="text-gray-600 mt-2">查看您的借阅记录和借阅历史</p>
+        </div>
+
+        <!-- 统计概览 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" id="stats-container">
+            <!-- 动态加载统计信息 -->
+        </div>
+
+        <!-- 借阅记录筛选 -->
+        <div class="card bg-white shadow-lg mb-8">
+            <div class="card-body">
+                <div class="flex flex-col md:flex-row gap-4">
+                    <select id="filter-status" class="select select-bordered w-full md:w-auto">
+                        <option value="all">全部状态</option>
+                        <option value="borrowed">在借中</option>
+                        <option value="returned">已归还</option>
+                        <option value="overdue">已逾期</option>
+                    </select>
+                    <button onclick="loadBorrows()" class="btn btn-primary border-none" style="background-color: oklch; color: rgb(255, 255, 255);">
+                        <i class="fas fa-filter mr-2"></i>筛选
+                    </button>
+                    <button onclick="location.reload()" class="btn btn-outline" style="background-color: #65e3ff; color: rgb(255, 255, 255);">
+                        <i class="fas fa-redo mr-2"></i>刷新
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 借阅记录列表 -->
+        <div class="card bg-white shadow-lg">
+            <div class="card-body">
+                <h2 class="card-title text-gray-700 mb-4">
+                    <i class="fas fa-list mr-2"></i>借阅记录
+                </h2>
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra w-full">
+                        <thead>
+                            <tr class="bg-green-50">
+                                <th>图书编号</th>
+                                <th>书名</th>
+                                <th>作者</th>
+                                <th>借书日期</th>
+                                <th>应还日期</th>
+                                <th>实际还书日期</th>
+                                <th>状态</th>
+                                <th>罚款金额</th>
+                            </tr>
+                        </thead>
+                        <tbody id="borrows-table-body">
+                            <!-- 动态加载 -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="alert alert-info mt-6" id="no-data-alert" style="display: none;">
+                    <div>
+                        <i class="fas fa-info-circle"></i>
+                        <span>暂无借阅记录</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 页面加载时获取借阅记录
+        document.addEventListener('DOMContentLoaded', function() {
+            loadBorrows();
+        });
+        
+        // 加载借阅记录
+        function loadBorrows() {
+            const filterStatus = document.getElementById('filter-status').value;
+            
+            fetch('/api/reader/borrows')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayStats(data.stats);
+                        displayBorrows(data.borrows, filterStatus);
+                    } else {
+                        alert('获取借阅记录失败：' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('获取借阅记录出错:', error);
+                    alert('获取借阅记录出错，请稍后重试');
+                });
+        }
+        
+        // 显示统计信息
+        function displayStats(stats) {
+            const statsContainer = document.getElementById('stats-container');
+            
+            const statsHTML = `
+                <div class="card bg-white shadow-lg">
+                    <div class="card-body">
+                        <h2 class="text-2xl font-bold text-blue-600">${stats.total_borrows}</h2>
+                        <p class="text-gray-600">总借阅数</p>
+                    </div>
+                </div>
+                <div class="card bg-white shadow-lg">
+                    <div class="card-body">
+                        <h2 class="text-2xl font-bold text-orange-600">${stats.active_borrows}</h2>
+                        <p class="text-gray-600">在借图书</p>
+                    </div>
+                </div>
+                <div class="card bg-white shadow-lg">
+                    <div class="card-body">
+                        <h2 class="text-2xl font-bold text-red-600">${stats.overdue_books}</h2>
+                        <p class="text-gray-600">逾期图书</p>
+                    </div>
+                </div>
+                <div class="card bg-white shadow-lg">
+                    <div class="card-body">
+                        <h2 class="text-2xl font-bold text-purple-600">¥${stats.total_fine.toFixed(2)}</h2>
+                        <p class="text-gray-600">总罚款金额</p>
+                    </div>
+                </div>
+            `;
+            
+            statsContainer.innerHTML = statsHTML;
+        }
+        
+        // 显示借阅记录
+        function displayBorrows(borrows, filterStatus) {
+            const tbody = document.getElementById('borrows-table-body');
+            const noDataAlert = document.getElementById('no-data-alert');
+            
+            // 筛选记录
+            let filteredBorrows = borrows;
+            if (filterStatus === 'borrowed') {
+                filteredBorrows = borrows.filter(b => b.status === '在借');
+            } else if (filterStatus === 'returned') {
+                filteredBorrows = borrows.filter(b => b.status === '已还');
+            } else if (filterStatus === 'overdue') {
+                filteredBorrows = borrows.filter(b => b.is_overdue);
+            }
+            
+            if (!filteredBorrows || filteredBorrows.length === 0) {
+                tbody.innerHTML = '';
+                noDataAlert.style.display = 'flex';
+                return;
+            }
+            
+            noDataAlert.style.display = 'none';
+            
+            let tbodyHTML = '';
+            filteredBorrows.forEach(borrow => {
+                // 状态标签
+                let statusBadge = '';
+                if (borrow.status === '在借') {
+                    if (borrow.is_overdue) {
+                        statusBadge = `<span class="badge badge-error">逾期 ${borrow.days_overdue}天</span>`;
+                    } else if (borrow.is_renewed) {
+                        statusBadge = '<span class="badge badge-warning">已续借</span>';
+                    } else {
+                        statusBadge = '<span class="badge badge-success">在借中</span>';
+                    }
+                } else {
+                    statusBadge = '<span class="badge badge-info">已归还</span>';
+                }
+                
+                // 罚款金额显示
+                let fineDisplay = '¥0.00';
+                if (borrow.fine > 0) {
+                    fineDisplay = `<span class="text-red-600 font-bold">¥${borrow.fine.toFixed(2)}</span>`;
+                }
+                
+                const row = `
+                    <tr>
+                        <td>${borrow.book_number}</td>
+                        <td><strong>${borrow.book_name}</strong></td>
+                        <td>${borrow.author}</td>
+                        <td>${borrow.borrow_date || '--'}</td>
+                        <td>${borrow.due_date || '--'}</td>
+                        <td>${borrow.return_date || '--'}</td>
+                        <td>${statusBadge}</td>
+                        <td>${fineDisplay}</td>
+                    </tr>
+                `;
+                tbodyHTML += row;
+            });
+            
+            tbody.innerHTML = tbodyHTML;
+        }
+    </script>
+</body>
+</html>

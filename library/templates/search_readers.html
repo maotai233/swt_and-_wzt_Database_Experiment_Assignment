@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>读者搜索结果 - 图书管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.bootcdn.net/ajax/libs/daisyui/4.12.10/full.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+  <!-- 导航栏 -->
+  <div class="navbar" style="background-color:#7F5FCE; color:white;">
+    <div class="flex-1">
+      <a href="/admin/dashboard" class="btn btn-ghost normal-case text-xl">
+        <i class="fas fa-book mr-2"></i>图书管理系统 - 管理员
+      </a>
+    </div>
+    <div class="flex-none">
+      <ul class="menu menu-horizontal px-1">
+        <li class="mr-4"> <a href="/admin/dashboard" class="btn border-none" style="background-color: #d4c4e7; ">返回管理员面板</a></li>
+        <li class="mr-4"><a href="/admin/readers" class="btn border-none" style="background-color: #d4c4e7; ">返回图书列表</a></li>
+        <li><a href="/logout" class="btn btn-error">退出登录</a></li>
+      </ul>
+    </div>
+  </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">
+                <i class="fas fa-search text-blue-600 mr-3"></i>读者搜索结果
+            </h1>
+            <p class="text-gray-600 mt-2">搜索关键词："{{ search_value }}"</p>
+        </div>
+
+        <!-- 读者列表 -->
+        <div class="card bg-white shadow-lg">
+            <div class="card-body">
+                <h2 class="card-title text-blue-600 mb-4">
+                    <i class="fas fa-list mr-2"></i>读者列表
+                </h2>
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra w-full">
+                        <thead>
+                            <tr class="bg-blue-50">
+                                <th>读者编号</th>
+                                <th>借阅卡号</th>
+                                <th>姓名</th>
+                                <th>性别</th>
+                                <th>身份证号</th>
+                                <th>未交罚款</th>
+                                <th>可借册数</th>
+                                <th>已借册数</th>
+                                <th>状态</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if readers %}
+                                {% for reader in readers %}
+                                <tr>
+                                    <td>{{ reader.reader_number }}</td>
+                                    <td>{{ reader.card_number }}</td>
+                                    <td>{{ reader.reader_name }}</td>
+                                    <td>{{ reader.sex }}</td>
+                                    <td>{{ reader.id_number }}</td>
+                                    <td>{{ reader.unpaid_fine }}</td>
+                                    <td>{{ reader.borrowable_books }}</td>
+                                    <td>{{ reader.borrowed_books }}</td>
+                                    <td>
+                                        {% if reader.is_lost %}
+                                        <span class="badge badge-error">挂失</span>
+                                        {% else %}
+                                        <span class="badge badge-success">正常</span>
+                                        {% endif %}
+                                    </td>
+
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="10" class="text-center py-8">
+                                        <p class="text-gray-500">没有找到相关读者</p>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-6 text-center">
+            <a href="/admin/readers" class="btn btn-primary" style="color:white;">
+                <i class="fas fa-arrow-left mr-2" ></i>返回读者列表
+            </a>
+        </div>
+    </div>
+
+    <!-- 读者详情模态框 -->
+    <dialog id="readerDetailsModal" class="modal">
+        <form method="dialog" class="modal-box max-w-4xl">
+            <h3 class="font-bold text-lg mb-4">
+                <i class="fas fa-user mr-2"></i>读者详情
+            </h3>
+            <div id="readerDetailsContent">
+                <!-- 读者详细信息将在这里显示 -->
+            </div>
+            <div class="modal-action">
+                <button class="btn">关闭</button>
+            </div>
+        </form>
+    </dialog>
+
+</body>
+</html>

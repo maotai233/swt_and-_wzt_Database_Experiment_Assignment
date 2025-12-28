@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>读者管理 - 图书管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.bootcdn.net/ajax/libs/daisyui/4.12.10/full.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+  <!-- 导航栏 -->
+  <div class="navbar" style="background-color:#7F5FCE; color:white;">
+    <div class="flex-1">
+      <a href="/admin/dashboard" class="btn btn-ghost normal-case text-xl">
+        <i class="fas fa-book mr-2"></i>图书管理系统 - 管理员
+      </a>
+    </div>
+    <div class="flex-none">
+      <ul class="menu menu-horizontal px-1">
+        <li class="mr-4"> <a href="/admin/dashboard" class="btn border-none" style="background-color: #d4c4e7; ">返回管理员面板</a></li>
+        <li><a href="/logout" class="btn btn-error">退出登录</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="container mx-auto px-4 py-8">
+    <!-- 页面标题 -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-800">
+        <i class="fas fa-users text-blue-600 mr-3"></i>读者管理
+      </h1>
+      <p class="text-gray-600 mt-2">管理图书馆的读者信息和借阅卡</p>
+    </div>
+
+    <!-- 搜索和添加区域 -->
+    <div class="card bg-white shadow-lg mb-8">
+        <div class="card-body">
+            <form method="GET" action="/admin/search_readers" class="flex flex-col md:flex-row gap-4">
+                <div class="flex-1">
+                    <input type="text" name="search_value" placeholder="搜索读者（姓名、卡号、身份证号）" 
+                          class="input input-bordered w-full">
+                </div>
+                <select name="search_type" class="select select-bordered">
+                    <option value="name">按姓名</option>
+                    <option value="card">按卡号</option>
+                    <option value="id">按身份证号</option>
+                </select>
+                <button type="submit" class="btn btn-primary border-none"  style="background-color: #2563EB; color: rgb(255, 255, 255);">
+                    <i class="fas fa-search mr-2" ></i>搜索
+                </button>
+                <a href="/admin/add_reader" class="btn btn-success border-none"  style="background-color: #A586F3; color: rgb(255, 255, 255);">
+                    <i class="fas fa-plus mr-2"></i>添加读者
+                </a>
+            </form>
+        </div>
+    </div>
+
+    <!-- 读者列表 -->
+    <div class="card bg-white shadow-lg mb-8">
+      <div class="card-body">
+        <h2 class="card-title text-blue-600 mb-4">
+          <i class="fas fa-list mr-2"></i>读者列表
+        </h2>
+        <div class="overflow-x-auto">
+          <table class="table table-zebra w-full">
+            <thead>
+              <tr class="bg-blue-50">
+                <th>读者编号</th>
+                <th>借阅卡号</th>
+                <th>姓名</th>
+                <th>性别</th>
+                <th>身份证号</th>
+                <th>未交罚款</th>
+                <th>可借册数</th>
+                <th>已借册数</th>
+                <th>状态</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="readersTableBody">
+              {% for reader in readers %}
+              <tr>
+               
+                <td>{{ reader.reader_number }}</td>
+                <td>{{ reader.card_number }}</td>
+                 <td>{{ reader.reader_name }}</td>
+                <td>{{ reader.sex }}</td>
+                <td>{{ reader.id_number }}</td>
+                <td>{{ reader.unpaid_fine }}</td>
+                <td>{{ reader.borrowable_books }}</td>
+                <td>{{ reader.borrowed_books }}</td>
+                <td>
+                  {% if reader.is_lost %}
+                  <span class="badge badge-error whitespace-nowrap min-w-fit px-2">挂失</span>
+                  {% else %}
+                  <span class="badge badge-success whitespace-nowrap min-w-fit px-2">正常</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <div class="flex gap-2">
+                    <button onclick="editReader('{{ reader.reader_number }}')" class="btn btn-sm btn-warning">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button onclick="viewReaderDetails('{{ reader.reader_number }}')" class="btn btn-sm btn-info">
+                      <i class="fas fa-eye"></i>
+                    </button>
+                    <button onclick="handleLostCard('{{ reader.card_number }}')" class="btn btn-sm {% if reader.is_lost %}btn-success{% else %}btn-error{% endif %}">
+                      <i class="fas {% if reader.is_lost %}fa-unlock{% else %}fa-lock{% endif %}"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 借阅卡管理 -->
+    <div class="card bg-white shadow-lg">
+      <div class="card-body">
+        <h2 class="card-title text-green-600 mb-4">
+          <i class="fas fa-credit-card mr-2"></i>借阅卡管理
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div class="stat bg-green-50 rounded-lg p-4">
+            <div class="stat-title">总借阅卡数</div>
+            <div class="stat-value text-green-600">{{ stats.total_cards }}</div>
+          </div>
+          <div class="stat bg-blue-50 rounded-lg p-4">
+            <div class="stat-title">正常状态</div>
+            <div class="stat-value text-blue-600">{{ stats.active_cards }}</div>
+          </div>
+          <div class="stat bg-red-50 rounded-lg p-4">
+            <div class="stat-title">挂失状态</div>
+            <div class="stat-value text-red-600">{{ stats.lost_cards }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    
+    <!-- 读者详情模态框 -->
+    <dialog id="readerDetailsModal" class="modal">
+      <form method="dialog" class="modal-box max-w-4xl">
+        <h3 class="font-bold text-lg mb-4">
+          <i class="fas fa-user mr-2"></i>读者详情
+        </h3>
+        <div id="readerDetailsContent">
+          <!-- 读者详细信息将在这里显示 -->
+        </div>
+        <div class="modal-action">
+          <button class="btn">关闭</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script>
+        function searchReaders() {
+            const searchTerm = document.getElementById('searchInput').value;
+            // 实现搜索功能
+            console.log('搜索读者:', searchTerm);
+        }
+
+        function showAddReaderModal() {
+            document.getElementById('addReaderModal').showModal();
+        }
+
+        function addReader() {
+            const readerData = {
+            reader_number: document.getElementById('add_reader_number').value,
+            card_number: document.getElementById('add_card_number').value,
+            reader_name: document.getElementById('add_reader_name').value,
+            sex: document.getElementById('add_sex').value,
+            id_number: document.getElementById('add_id_number').value,
+            borrowable_books: document.getElementById('add_borrowable_books').value,
+            borrow_days: document.getElementById('add_borrow_days').value
+            };
+
+            fetch('/api/readers', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(readerData)
+            })
+            .then(response => response.json())
+            .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('添加失败：' + data.message);
+            }
+            });
+        }
+
+        function editReader(readerNumber) {
+            console.log('编辑读者:', readerNumber);
+            // 跳转到编辑页面
+            window.location.href = `/admin/edit_reader/${readerNumber}`;
+        }
+
+        function viewReaderDetails(readerNumber) {
+            console.log('查看读者详情:', readerNumber);
+            
+            // 首先显示加载中的模态框
+            const modal = document.getElementById('readerDetailsModal');
+            const content = document.getElementById('readerDetailsContent');
+            
+            content.innerHTML = `
+                <div class="text-center py-8">
+                    <div class="loading loading-spinner loading-lg"></div>
+                    <p class="mt-4 text-gray-600">正在加载读者信息...</p>
+                </div>
+            `;
+            modal.showModal();
+            
+            // 调用API获取读者详情
+            fetch(`/api/readers/${readerNumber}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP错误 ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('API响应:', data);
+                    if (data.success) {
+                        content.innerHTML = `
+                            <div class="space-y-4">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div><strong>读者编号:</strong> ${data.reader.reader_number}</div>
+                                    <div><strong>借阅卡号:</strong> ${data.reader.card_number}</div>
+                                    <div><strong>姓名:</strong> ${data.reader.reader_name}</div>
+                                    <div><strong>性别:</strong> ${data.reader.sex}</div>
+                                    <div><strong>身份证号:</strong> ${data.reader.id_number}</div>
+                                    <div><strong>未交罚款:</strong> ¥${parseFloat(data.reader.unpaid_fine || 0).toFixed(2)}</div>
+                                    <div><strong>可借册数:</strong> ${data.reader.borrowable_books}</div>
+                                    <div><strong>已借册数:</strong> ${data.reader.borrowed_books}</div>
+                                    <div><strong>状态:</strong> ${data.reader.is_lost ? '<span class="badge badge-error">挂失</span>' : '<span class="badge badge-success">正常</span>'}</div>
+                                </div>
+                                <div class="mt-6">
+                                    <h4 class="font-bold mb-2">借阅历史</h4>
+                                    ${data.borrow_history && data.borrow_history.length > 0 ? 
+                                        `<div class="overflow-x-auto">
+                                            <table class="table table-zebra w-full">
+                                                <thead>
+                                                    <tr>
+                                                        <th>图书编号</th>
+                                                        <th>书名</th>
+                                                        <th>借书日期</th>
+                                                        <th>还书日期</th>
+                                                        <th>状态</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    ${data.borrow_history.map(borrow => `
+                                                        <tr>
+                                                            <td>${borrow.book_number || ''}</td>
+                                                            <td>${borrow.book_name || ''}</td>
+                                                            <td>${borrow.borrow_date || ''}</td>
+                                                            <td>${borrow.return_date || '未归还'}</td>
+                                                            <td>${borrow.status || ''}</td>
+                                                        </tr>
+                                                    `).join('')}
+                                                </tbody>
+                                            </table>
+                                        </div>` : 
+                                        '<p class="text-gray-500">暂无借阅历史记录</p>'
+                                    }
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        content.innerHTML = `
+                            <div class="alert alert-error">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <span>加载失败：${data.message || '未知错误'}</span>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('加载读者信息出错:', error);
+                    content.innerHTML = `
+                        <div class="alert alert-error">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>加载失败：${error.message}</span>
+                            <p class="text-sm mt-2">请检查网络连接或联系管理员</p>
+                        </div>
+                    `;
+                });
+        }
+
+        function handleLostCard(cardNumber) {
+          if (confirm('确定要更改借阅卡状态吗？')) {
+              fetch(`/api/cards/${cardNumber}/toggle-lost`, {
+              method: 'POST'
+              })
+              .then(response => response.json())
+              .then(data => {
+              if (data.success) {
+                  alert(data.message);
+                  location.reload();
+              } else {
+                  alert('操作失败：' + data.message);
+              }
+            });
+          }
+        }
+
+    </script>
+</body>
+</html>

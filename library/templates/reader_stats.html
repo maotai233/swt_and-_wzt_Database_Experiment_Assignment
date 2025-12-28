@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>借阅统计 - 图书管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.bootcdn.net/ajax/libs/daisyui/4.12.10/full.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-50">
+    <!-- 导航栏 -->
+    <div class="navbar" style="background-color:#2563eb; color:white;">
+        <div class="flex-1">
+            <a href="/reader/dashboard" class="btn btn-ghost normal-case text-xl">
+                <i class="fas fa-book mr-2"></i>图书管理系统 - 读者
+            </a>
+        </div>
+        <div class="flex-none">
+            <ul class="menu menu-horizontal px-1">
+                <li class="mr-4"><a href="/reader/dashboard" class="btn border-none" style="background-color: #d4c4e7; ">返回读者面板</a></li>
+                <li><a href="/logout" class="btn btn-error">退出登录</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">
+                <i class="fas fa-chart-bar text-indigo-600 mr-3"></i>借阅统计
+            </h1>
+            <p class="text-gray-600 mt-2">查看个人借阅统计信息</p>
+        </div>
+
+        <!-- 统计概览 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" id="stats-container">
+            <!-- 动态加载统计信息 -->
+        </div>
+
+        <!-- 月度借阅统计 -->
+        <div class="card bg-white shadow-lg mb-8">
+            <div class="card-body">
+                <h2 class="card-title text-indigo-600 mb-4">
+                    <i class="fas fa-chart-line mr-2"></i>月度借阅统计
+                </h2>
+                <div class="h-64">
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 借阅偏好 -->
+        <div class="card bg-white shadow-lg">
+            <div class="card-body">
+                <h2 class="card-title text-green-600 mb-4">
+                    <i class="fas fa-heart mr-2"></i>借阅偏好
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div id="book-type-stats">
+                        <h3 class="font-semibold mb-2">最喜欢的图书类型</h3>
+                        <div class="space-y-2" id="book-type-container">
+                            <!-- 动态加载 -->
+                        </div>
+                    </div>
+                    <div id="time-stats">
+                        <h3 class="font-semibold mb-2">借阅时间段分布</h3>
+                        <div class="space-y-2" id="time-container">
+                            <!-- 动态加载 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 页面加载时获取统计信息
+        document.addEventListener('DOMContentLoaded', function() {
+            loadReaderStats();
+        });
+        
+        // 加载读者统计信息
+        function loadReaderStats() {
+            fetch('/api/reader/stats')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayStats(data.stats);
+                        displayMonthlyChart(data.monthly_data);
+                        displayBookTypeStats(data.book_type_stats);
+                        displayTimeStats(data.time_stats);
+                    } else {
+                        alert('获取统计信息失败：' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('获取统计信息出错:', error);
+                    alert('获取统计信息出错，请稍后重试');
+                });
+        }
+        
+        // 显示统计概览
+        function displayStats(stats) {
+            const statsContainer = document.getElementById('stats-container');
+            
+            const statsHTML = `
+                <div class="card bg-white shadow-lg">
+                    <div class="card-body">
+                        <h2 class="text-2xl font-bold text-indigo-600">${stats.total_borrows}</h2>
+                        <p class="text-gray-600">总借阅量</p>
+                    </div>
+                </div>
+                <div class="card bg-white shadow-lg">
+                    <div class="card-body">
+                        <h2 class="text-2xl font-bold text-green-600">${stats.current_borrows}</h2>
+                        <p class="text-gray-600">当前借阅</p>
+                    </div>
+                </div>
+                <div class="card bg-white shadow-lg">
+                    <div class="card-body">
+                        <h2 class="text-2xl font-bold text-blue-600">${stats.returned_books}</h2>
+                        <p class="text-gray-600">已还图书</p>
+                    </div>
+                </div>
+                <div class="card bg-white shadow-lg">
+                    <div class="card-body">
+                        <h2 class="text-2xl font-bold text-orange-600">${stats.overdue_count}</h2>
+                        <p class="text-gray-600">逾期次数</p>
+                    </div>
+                </div>
+            `;
+            
+            statsContainer.innerHTML = statsHTML;
+        }
+        
+        // 显示月度图表
+        function displayMonthlyChart(monthlyData) {
+            const ctx = document.getElementById('monthlyChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+                    datasets: [{
+                        label: '借阅数量',
+                        data: monthlyData || [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        backgroundColor: 'rgba(99, 102, 241, 0.5)',
+                        borderColor: 'rgb(99, 102, 241)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '借阅数量'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: '月份'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 显示图书类型统计
+        function displayBookTypeStats(bookTypeStats) {
+            const container = document.getElementById('book-type-container');
+            
+            if (!bookTypeStats || bookTypeStats.length === 0) {
+                container.innerHTML = '<p class="text-gray-500">暂无借阅记录</p>';
+                return;
+            }
+            
+            let html = '';
+            bookTypeStats.forEach(stat => {
+                html += `
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span>${stat.name}</span>
+                            <span>${stat.percentage}% (${stat.count}次)</span>
+                        </div>
+                        <progress class="progress progress-primary" value="${stat.percentage}" max="100"></progress>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // 显示时间段统计
+        function displayTimeStats(timeStats) {
+            const container = document.getElementById('time-container');
+            
+            if (!timeStats || timeStats.length === 0) {
+                container.innerHTML = '<p class="text-gray-500">暂无借阅记录</p>';
+                return;
+            }
+            
+            let html = '';
+            
+            // 预定义颜色类
+            const colorClasses = [
+                'progress-success',
+                'progress-warning',
+                'progress-error',
+                'progress-info',
+                'progress-secondary'
+            ];
+            
+            timeStats.forEach((stat, index) => {
+                const colorClass = colorClasses[index % colorClasses.length];
+                html += `
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span>${stat.period}</span>
+                            <span>${stat.percentage}% (${stat.count}次)</span>
+                        </div>
+                        <progress class="progress ${colorClass}" value="${stat.percentage}" max="100"></progress>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+    </script>
+</body>
+</html>

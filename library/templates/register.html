@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>读者注册 - 图书管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.bootcdn.net/ajax/libs/daisyui/4.12.10/full.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-2xl mx-auto">
+            <!-- 注册卡片 -->
+            <div class="card bg-white shadow-2xl">
+                <div class="card-body">
+                    <div class="text-center mb-6">
+                        <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                            <i class="fas fa-user-plus text-blue-600 mr-2"></i>读者注册
+                        </h1>
+                        <p class="text-gray-600">请填写以下信息注册读者账户</p>
+                    </div>
+
+                    <form method="POST" action="/register">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- 用户名 -->
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text">用户名 *</span>
+                                </label>
+                                <input type="text" name="username" placeholder="请输入用户名" class="input input-bordered" required>
+                                <label class="label">
+                                    <span class="label-text-alt text-gray-500">用于登录系统</span>
+                                </label>
+                            </div>
+
+                            <!-- 密码 -->
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text">密码 *</span>
+                                </label>
+                                <input type="password" name="password" placeholder="请输入密码" class="input input-bordered" required>
+                                <label class="label">
+                                    <span class="label-text-alt text-gray-500">至少6位字符</span>
+                                </label>
+                            </div>
+
+                            <!-- 姓名 -->
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text">姓名 *</span>
+                                </label>
+                                <input type="text" name="name" placeholder="请输入真实姓名" class="input input-bordered" required>
+                            </div>
+
+                            <!-- 性别 -->
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text">性别 *</span>
+                                </label>
+                                <select name="gender" class="select select-bordered" required>
+                                    <option value="">请选择性别</option>
+                                    <option value="男">男</option>
+                                    <option value="女">女</option>
+                                </select>
+                            </div>
+
+                            <!-- 身份证号 -->
+                            <div class="form-control md:col-span-2">
+                                <label class="label">
+                                    <span class="label-text">身份证号 *</span>
+                                </label>
+                                <input type="text" name="id_number" placeholder="请输入18位身份证号" pattern="\d{17}[\dX]" maxlength="18" class="input input-bordered" required>
+                            </div>
+
+                            <!-- 邮箱 -->
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text">电子邮箱</span>
+                                </label>
+                                <input type="email" name="email" placeholder="example@email.com" class="input input-bordered">
+                            </div>
+
+                            <!-- 联系电话 -->
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text">联系电话</span>
+                                </label>
+                                <input type="tel" name="phone" placeholder="请输入联系电话" class="input input-bordered">
+                            </div>
+
+                            <!-- 联系地址 -->
+                            <div class="form-control md:col-span-2">
+                                <label class="label">
+                                    <span class="label-text">联系地址</span>
+                                </label>
+                                <input type="text" name="address" placeholder="请输入联系地址" class="input input-bordered">
+                            </div>
+                        </div>
+
+                        <!-- 注册按钮 -->
+                        <div class="form-control mt-6">
+                            <button type="submit" class="btn btn-primary w-full" style="color:white">
+                                <i class="fas fa-user-plus mr-2"></i>注册读者账户
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- 错误信息显示 -->
+                    {% if error %}
+                    <div class="alert alert-error mt-4">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <span>{{ error }}</span>
+                    </div>
+                    {% endif %}
+
+                    <!-- 已有账户 -->
+                    <div class="divider">已有账户？</div>
+                    <div class="text-center">
+                        <a href="/login" class="text-blue-600 hover:text-blue-800 font-medium">
+                            <i class="fas fa-sign-in-alt mr-1"></i>立即登录
+                        </a>
+                        <span class="mx-2 text-gray-400">|</span>
+                        <a href="/" class="text-gray-600 hover:text-gray-800">
+                            <i class="fas fa-arrow-left mr-1"></i>返回首页
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="footer footer-center p-4 text-white mt-16" style="background-color: #7F5FCE;">
+        <div>
+            <p>图书管理系统 - 注册</p>
+            <p class="text-sm text-white-400" >数据库系统原理及实验</p>
+            </p>
+        </div>
+    </footer>
+</body>
+</html>

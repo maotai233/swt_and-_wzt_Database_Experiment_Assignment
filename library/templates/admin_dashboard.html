@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理员面板 - 图书管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.bootcdn.net/ajax/libs/daisyui/4.12.10/full.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="bg-gray-50">
+    <!-- 导航栏 -->
+    <div class="navbar" style="background-color:#7F5FCE; color:white;">
+        <div class="flex-1">
+            <a class="btn btn-ghost normal-case text-xl">
+                <i class="fas fa-book mr-2"></i>图书管理系统 - 管理员
+            </a>
+        </div>
+        <div class="flex-none">
+            <ul class="menu menu-horizontal px-1">
+                <li><a href="/logout" class="btn border-none" style="background-color: #E4080A; color: black;">退出登录</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <!-- 欢迎信息 -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">
+                <i class="fas fa-user-shield text-blue-600 mr-3"></i>管理员面板
+            </h1>
+            <p class="text-gray-600 mt-2">欢迎回来，{{ username }}</p>
+        </div>
+
+        <!-- 统计卡片部分 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="card bg-white shadow-lg">
+                <div class="card-body">
+                    <div class="flex items-center">
+                        <div class="text-blue-600 text-3xl mr-4">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-bold">{{ stats.total_books }}</h2>
+                            <p class="text-gray-600">图书总数</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-white shadow-lg">
+                <div class="card-body">
+                    <div class="flex items-center">
+                        <div class="text-green-600 text-3xl mr-4">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-bold">{{ stats.total_readers }}</h2>
+                            <p class="text-gray-600">读者总数</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-white shadow-lg">
+                <div class="card-body">
+                    <div class="flex items-center">
+                        <div class="text-orange-600 text-3xl mr-4">
+                            <i class="fas fa-hand-holding"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-bold">{{ stats.active_borrows }}</h2>
+                            <p class="text-gray-600">在借图书</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-white shadow-lg">
+                <div class="card-body">
+                    <div class="flex items-center">
+                        <div class="text-red-600 text-3xl mr-4">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-bold">{{ stats.overdue_books }}</h2>
+                            <p class="text-gray-600">逾期图书</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 今日和本周统计 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="card bg-white shadow-lg">
+                <div class="card-body">
+                    <h2 class="card-title text-blue-600">
+                        <i class="fas fa-calendar-day mr-2"></i>今日借阅
+                    </h2>
+                    <div id="today-borrows" class="text-center py-4">
+                        <div class="loading loading-spinner loading-lg"></div>
+                        <p class="text-gray-500 mt-2">加载中...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-white shadow-lg">
+                <div class="card-body">
+                    <h2 class="card-title text-green-600">
+                        <i class="fas fa-calendar-week mr-2"></i>本周借阅
+                    </h2>
+                    <div id="week-borrows" class="text-center py-4">
+                        <div class="loading loading-spinner loading-lg"></div>
+                        <p class="text-gray-500 mt-2">加载中...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 图表统计区域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- 月度借阅统计图表 -->
+            <div class="card bg-white shadow-lg">
+                <div class="card-body">
+                    <h2 class="card-title text-blue-600 mb-4">
+                        <i class="fas fa-chart-line mr-2"></i>月度借阅统计
+                    </h2>
+                    <div class="h-64">
+                        <canvas id="monthlyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 借阅时间段统计图表 -->
+            <div class="card bg-white shadow-lg">
+                <div class="card-body">
+                    <h2 class="card-title text-green-600 mb-4">
+                        <i class="fas fa-clock mr-2"></i>借阅时间段分析
+                    </h2>
+                    <div class="h-64">
+                        <canvas id="timeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 功能菜单 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="card bg-white shadow-lg hover:shadow-xl transition-shadow">
+                <div class="card-body">
+                    <h2 class="card-title text-blue-600">
+                        <i class="fas fa-book mr-2"></i>图书管理
+                    </h2>
+                    <p class="text-gray-600">管理图书信息，包括添加、修改、删除图书</p>
+                    <div class="card-actions justify-end mt-4">
+                        <a href="/admin/books" class="btn btn-primary border-none"
+                            style="background-color: #2563EB; color: rgb(255, 255, 255);">进入</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-white shadow-lg hover:shadow-xl transition-shadow">
+                <div class="card-body">
+                    <h2 class="card-title text-green-600">
+                        <i class="fas fa-users mr-2"></i>读者管理
+                    </h2>
+                    <p class="text-gray-600">管理读者信息，包括添加、修改、删除读者</p>
+                    <div class="card-actions justify-end mt-4">
+                        <a href="/admin/readers" class="btn btn-primary border-none"
+                            style="background-color: #16A34A; color: rgb(255, 255, 255);">进入</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-white shadow-lg hover:shadow-xl transition-shadow">
+                <div class="card-body">
+                    <h2 class="card-title text-orange-600">
+                        <i class="fas fa-hand-holding mr-2"></i>借阅管理
+                    </h2>
+                    <p class="text-gray-600">管理图书借阅和归还记录</p>
+                    <div class="card-actions justify-end mt-4">
+                        <a href="/admin/borrows" class="btn btn-primary border-none"
+                            style="background-color: #EA580C; color: rgb(255, 255, 255);">进入</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-white shadow-lg hover:shadow-xl transition-shadow">
+                <div class="card-body">
+                    <h2 class="card-title text-purple-600">
+                        <i class="fas fa-truck mr-2"></i>图书入库
+                    </h2>
+                    <p class="text-gray-600">管理图书入库和库存</p>
+                    <div class="card-actions justify-end mt-4">
+                        <a href="/admin/stock" class="btn btn-primary border-none"
+                            style="background-color: #9333EA; color: rgb(255, 255, 255);">进入</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-white shadow-lg hover:shadow-xl transition-shadow">
+                <div class="card-body">
+                    <h2 class="card-title text-red-600">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>报损管理
+                    </h2>
+                    <p class="text-gray-600">管理图书报损和损坏记录</p>
+                    <div class="card-actions justify-end mt-4">
+                        <a href="/admin/damage" class="btn btn-primary border-none"
+                            style="background-color: #DC2626; color: rgb(255, 255, 255);">进入</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-white shadow-lg hover:shadow-xl transition-shadow">
+                <div class="card-body">
+                    <h2 class="card-title text-indigo-600">
+                        <i class="fas fa-search mr-2"></i>查询统计
+                    </h2>
+                    <p class="text-gray-600">查看各种统计信息和报表</p>
+                    <div class="card-actions justify-end mt-4">
+                        <a href="/admin/reports" class="btn btn-primary border-none"
+                            style="background-color: #4F46E5; color: rgb(255, 255, 255);">进入</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="footer footer-center p-4 text-white mt-16" style="background-color: #7F5FCE;">
+        <div>
+            <p>图书管理系统 - 管理员版本</p>
+            <p class="text-sm text-white-400">数据库系统原理及实验</p>
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // 页面加载时获取图表数据
+        document.addEventListener('DOMContentLoaded', function () {
+            loadDashboardCharts();
+        });
+
+        // 加载仪表盘图表数据
+        function loadDashboardCharts() {
+            fetch('/api/admin/dashboard/charts')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayTodayStats(data.today_borrows, data.week_borrows);
+                        initMonthlyChart(data.monthly_labels, data.monthly_data);
+                        initTimeChart(data.time_data);
+                    } else {
+                        console.error('获取图表数据失败:', data.message);
+                        displayDefaultCharts();
+                    }
+                })
+                .catch(error => {
+                    console.error('获取图表数据出错:', error);
+                    displayDefaultCharts();
+                });
+        }
+
+        // 显示今日和本周统计
+        function displayTodayStats(todayBorrows, weekBorrows) {
+            const todayContainer = document.getElementById('today-borrows');
+            const weekContainer = document.getElementById('week-borrows');
+
+            if (todayContainer) {
+                todayContainer.innerHTML = `
+                    <h3 class="text-4xl font-bold text-blue-600">${todayBorrows}</h3>
+                    <p class="text-gray-600 mt-2">今日借阅数量</p>
+                `;
+            }
+
+            if (weekContainer) {
+                weekContainer.innerHTML = `
+                    <h3 class="text-4xl font-bold text-green-600">${weekBorrows}</h3>
+                    <p class="text-gray-600 mt-2">本周借阅数量</p>
+                `;
+            }
+        }
+
+        // 初始化月度图表
+        function initMonthlyChart(labels, data) {
+            const ctx = document.getElementById('monthlyChart').getContext('2d');
+
+            // 如果没有数据，使用默认值
+            if (!labels || labels.length === 0) {
+                labels = ['1月', '2月', '3月', '4月', '5月', '6月'];
+            }
+
+            if (!data || data.length === 0) {
+                data = [0, 0, 0, 0, 0, 0];
+            }
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '借阅数量',
+                        data: data,
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderColor: 'rgb(59, 130, 246)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: 'rgb(59, 130, 246)',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '借阅数量'
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: '月份'
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // 初始化时间段图表
+        function initTimeChart(data) {
+            const ctx = document.getElementById('timeChart').getContext('2d');
+
+            // 如果没有数据，使用默认值
+            if (!data || data.length === 0) {
+                data = [0, 0, 0];
+            }
+
+            const labels = ['上午 (8-12点)', '下午 (14-18点)', '晚上 (19-22点)'];
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '借阅次数',
+                        data: data,
+                        backgroundColor: [
+                            'rgba(147, 51, 234, 0.7)',
+                            'rgba(59, 130, 246, 0.7)',
+                            'rgba(16, 185, 129, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgb(147, 51, 234)',
+                            'rgb(59, 130, 246)',
+                            'rgb(16, 185, 129)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '借阅次数'
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    return `借阅次数: ${context.raw}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 显示默认图表（数据加载失败时）
+        function displayDefaultCharts() {
+            // 显示今日和本周统计的默认值
+            displayTodayStats(0, 0);
+
+            // 初始化默认图表
+            initMonthlyChart(['1月', '2月', '3月', '4月', '5月', '6月'], [0, 0, 0, 0, 0, 0]);
+            initTimeChart([0, 0, 0]);
+
+            // 显示错误提示
+            const todayContainer = document.getElementById('today-borrows');
+            const weekContainer = document.getElementById('week-borrows');
+
+            if (todayContainer && weekContainer) {
+                const errorHtml = `
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>数据加载失败，显示默认数据</span>
+                    </div>
+                `;
+                todayContainer.insertAdjacentHTML('afterbegin', errorHtml);
+                weekContainer.insertAdjacentHTML('afterbegin', errorHtml);
+            }
+        }
+
+        // 自动刷新图表数据（每5分钟）
+        setInterval(() => {
+            loadDashboardCharts();
+        }, 5 * 60 * 1000); // 5分钟
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图书搜索 - 图书管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.bootcdn.net/ajax/libs/daisyui/4.12.10/full.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-50">
+    <!-- 导航栏 -->
+    <div class="navbar" style="background-color:#2563eb; color:white;">
+        <div class="flex-1">
+            <a href="/reader/dashboard" class="btn btn-ghost normal-case text-xl">
+                <i class="fas fa-book mr-2"></i>图书管理系统 - 读者
+            </a>
+        </div>
+        <div class="flex-none">
+            <ul class="menu menu-horizontal px-1">
+                <li class="mr-4">
+                    <a href="/reader/dashboard" class="btn border-none" style="background-color: #d4c4e7; ">返回读者面板</a>
+                </li>
+                <li><a href="/logout" class="btn btn-error">退出登录</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <!-- 页面标题 -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">
+                <i class="fas fa-search text-blue-600 mr-3"></i>图书搜索
+            </h1>
+            <p class="text-gray-600 mt-2">搜索和浏览图书馆的藏书</p>
+        </div>
+
+        <!-- 搜索表单 -->
+        <div class="card bg-white shadow-lg mb-8">
+            <div class="card-body">
+                <form method="GET" action="/reader/search" class="space-y-4">
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <div class="flex-1">
+                            <input type="text" name="search_value" placeholder="搜索图书..." value="{{ search_value }}"
+                                class="input input-bordered w-full">
+                        </div>
+                        <select name="search_type" class="select select-bordered">
+                            <option value="name" {% if search_type=='name' %}selected{% endif %}>按书名</option>
+                            <option value="author" {% if search_type=='author' %}selected{% endif %}>按作者</option>
+                            <option value="type" {% if search_type=='type' %}selected{% endif %}>按类型</option>
+                            <option value="publisher" {% if search_type=='publisher' %}selected{% endif %}>按出版社</option>
+                            <option value="all" {% if search_type=='all' %}selected{% endif %}>全部图书</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search mr-2"></i>搜索
+                        </button>
+                    </div>
+
+                    <!-- 热门搜索标签 -->
+                    <div class="flex flex-wrap gap-2 mt-2">
+                        <span class="text-gray-600 text-sm">热门搜索：</span>
+                        <button type="button" class="badge badge-outline search-tag" data-type="name"
+                            data-value="三体">三体</button>
+                        <button type="button" class="badge badge-outline search-tag" data-type="author"
+                            data-value="马伯庸">马伯庸</button>
+                        <button type="button" class="badge badge-outline search-tag" data-type="type"
+                            data-value="文学">文学</button>
+                        <button type="button" class="badge badge-outline search-tag" data-type="publisher"
+                            data-value="人民文学">人民文学</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 搜索结果统计 -->
+        {% if books %}
+        <div class="mb-4">
+            <p class="text-gray-600">
+                找到 <span class="font-bold text-blue-600">{{ books|length }}</span> 条结果
+                {% if search_value %}
+                搜索关键词: <span class="font-semibold">{{ search_value }}</span>
+                {% endif %}
+            </p>
+        </div>
+        {% endif %}
+
+        <!-- 搜索结果 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% if books %}
+            {% for book in books %}
+            <div class="card bg-white shadow-lg hover:shadow-xl transition-shadow">
+                <div class="card-body">
+                    <h3 class="card-title text-lg font-bold">{{ book[1] }}</h3>
+                    <p class="text-gray-600 text-sm mt-1">
+                        <i class="fas fa-user-edit mr-1"></i>{{ book[2] or '未知作者' }}
+                    </p>
+                    <div class="divider my-2"></div>
+                    <div class="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                            <p class="text-gray-500">类型</p>
+                            <p class="font-semibold">{{ book[3] or '未知' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500">出版社</p>
+                            <p class="font-semibold">{{ book[4] or '未知' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500">价格</p>
+                            <p class="font-semibold">¥{{ book[5] }}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500">库存</p>
+                            <p
+                                class="font-semibold book-stock {% if book[7] > 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                                {{ book[7] }}本
+                            </p>
+                        </div>
+                    </div>
+                    <div class="card-actions justify-end mt-4">
+                        {% if book[7] > 0 %}
+                        <button onclick="quickBorrow('{{ book[0] }}', '{{ book[1] }}', event)"
+                            class="btn btn-success borrow-btn">
+                            <i class="fas fa-book-reader mr-2"></i>借阅
+                        </button>
+                        {% else %}
+                        <button class="btn btn-disabled" disabled>
+                            <i class="fas fa-ban mr-2"></i>暂无库存
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="col-span-full">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <span>暂无搜索结果</span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- 无搜索结果时的推荐 -->
+        {% if not books and search_value %}
+        <div class="mt-8">
+            <div class="card bg-gray-50">
+                <div class="card-body">
+                    <h3 class="font-bold text-gray-700">搜索建议：</h3>
+                    <ul class="list-disc pl-5 mt-2 text-gray-600">
+                        <li>检查搜索词是否有拼写错误</li>
+                        <li>尝试使用更通用的关键词</li>
+                        <li>尝试搜索作者名或图书类型</li>
+                        <li>查看<a href="/reader/search?search_type=all" class="text-blue-600 hover:underline">全部图书</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // 快速借阅函数（无弹窗，直接借阅）
+        function quickBorrow(bookNumber, bookName, event) {
+            const button = event.target.closest('.borrow-btn') || event.target;
+
+            // 保存原始状态
+            const originalText = button.innerHTML;
+            const originalClasses = button.className;
+
+            // 显示加载状态
+            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>';
+            button.disabled = true;
+            button.classList.add('loading');
+
+            // 立即更新UI反馈
+            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>借阅中...';
+
+            // 调用快速借阅API
+            fetch('/api/reader/borrow/quick', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    book_number: bookNumber
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // 借阅成功 - 立即更新UI
+                        button.innerHTML = '<i class="fas fa-check mr-2"></i>已借阅';
+                        button.classList.remove('btn-success', 'loading');
+                        button.classList.add('btn-disabled', 'bg-green-500', 'text-white');
+
+                        // 更新库存显示
+                        updateBookStockImmediately(bookNumber, button);
+
+                        // 显示轻量级成功提示
+                        showQuickSuccess(bookName);
+
+                        // 记录借阅成功
+                        console.log(`借阅成功: ${bookName} (${bookNumber})`);
+
+                    } else {
+                        // 借阅失败 - 显示错误状态
+                        button.innerHTML = '<i class="fas fa-times mr-2"></i>借阅失败';
+                        button.classList.remove('btn-success', 'loading');
+                        button.classList.add('btn-error');
+
+                        // 2秒后恢复
+                        setTimeout(() => {
+                            button.innerHTML = originalText;
+                            button.className = originalClasses;
+                            button.disabled = false;
+                        }, 2000);
+
+                        // 显示轻量级错误提示
+                        showQuickError(data.message);
+                    }
+                })
+                .catch(error => {
+                    // 网络错误
+                    button.innerHTML = '<i class="fas fa-times mr-2"></i>网络错误';
+                    button.classList.remove('btn-success', 'loading');
+                    button.classList.add('btn-error');
+
+                    // 3秒后恢复
+                    setTimeout(() => {
+                        button.innerHTML = originalText;
+                        button.className = originalClasses;
+                        button.disabled = false;
+                    }, 3000);
+                });
+        }
+
+        // 立即更新图书库存显示
+        function updateBookStockImmediately(bookNumber, button) {
+            // 找到对应的图书卡片
+            const card = button.closest('.card');
+            if (card) {
+                const stockElement = card.querySelector('.book-stock');
+                if (stockElement) {
+                    const currentText = stockElement.textContent;
+                    const currentStock = parseInt(currentText) || 0;
+                    const newStock = currentStock - 1;
+
+                    if (newStock <= 0) {
+                        stockElement.textContent = '0本';
+                        stockElement.classList.remove('text-green-600');
+                        stockElement.classList.add('text-red-600');
+
+                        // 禁用所有借阅按钮
+                        card.querySelectorAll('.borrow-btn').forEach(btn => {
+                            if (!btn.disabled) {
+                                btn.innerHTML = '<i class="fas fa-ban mr-2"></i>暂无库存';
+                                btn.classList.remove('btn-success');
+                                btn.classList.add('btn-disabled');
+                                btn.disabled = true;
+                            }
+                        });
+                    } else {
+                        stockElement.textContent = newStock + '本';
+                    }
+                }
+            }
+        }
+
+        // 显示轻量级成功提示
+        function showQuickSuccess(bookName) {
+            // 创建微小的成功提示
+            const successBadge = document.createElement('div');
+            successBadge.className = 'success-badge';
+            successBadge.innerHTML = `
+                <div class="badge badge-success gap-2">
+                    <i class="fas fa-check"></i>
+                    已借阅《${bookName}》
+                </div>
+            `;
+
+            successBadge.style.position = 'fixed';
+            successBadge.style.top = '70px';
+            successBadge.style.right = '20px';
+            successBadge.style.zIndex = '9999';
+            successBadge.style.animation = 'fadeInOut 3s ease-in-out';
+
+            document.body.appendChild(successBadge);
+
+            // 3秒后移除
+            setTimeout(() => {
+                if (successBadge.parentNode) {
+                    successBadge.remove();
+                }
+            }, 3000);
+        }
+
+        // 显示轻量级错误提示
+        function showQuickError(message) {
+            // 创建微小的错误提示
+            const errorBadge = document.createElement('div');
+            errorBadge.className = 'error-badge';
+            errorBadge.innerHTML = `
+                <div class="badge badge-error gap-2">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    ${message.substring(0, 20)}${message.length > 20 ? '...' : ''}
+                </div>
+            `;
+
+            errorBadge.style.position = 'fixed';
+            errorBadge.style.top = '70px';
+            errorBadge.style.right = '20px';
+            errorBadge.style.zIndex = '9999';
+            errorBadge.style.animation = 'fadeInOut 3s ease-in-out';
+
+            document.body.appendChild(errorBadge);
+
+            // 3秒后移除
+            setTimeout(() => {
+                if (errorBadge.parentNode) {
+                    errorBadge.remove();
+                }
+            }, 3000);
+        }
+        // 添加CSS动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeInOut {
+                0% { opacity: 0; transform: translateY(-10px); }
+                10% { opacity: 1; transform: translateY(0); }
+                90% { opacity: 1; transform: translateY(0); }
+                100% { opacity: 0; transform: translateY(-10px); }
+            }
+            
+            .success-badge, .error-badge {
+                animation: fadeInOut 3s ease-in-out;
+            }
+            
+            .borrow-btn.loading {
+                opacity: 0.8;
+                cursor: not-allowed;
+            }
+            
+            .bg-green-500 {
+                background-color: #10b981 !important;
+            }
+        `;
+        document.head.appendChild(style);
+
+        // 表单搜索功能
+        document.addEventListener('DOMContentLoaded', function () {
+            // 搜索表单提交
+            const searchForm = document.querySelector('form');
+            if (searchForm) {
+                searchForm.addEventListener('submit', function (e) {
+                    e.preventDefault();
+
+                    const searchType = document.querySelector('select[name="search_type"]').value;
+                    const searchValue = document.querySelector('input[name="search_value"]').value;
+
+                    // 构建查询URL
+                    let url = '/reader/search';
+                    const params = new URLSearchParams();
+
+                    if (searchValue.trim()) {
+                        params.append('search_type', searchType);
+                        params.append('search_value', searchValue.trim());
+                        url = `/reader/search?${params.toString()}`;
+                    }
+
+                    window.location.href = url;
+                });
+            }
+
+            // 热门搜索标签
+            document.querySelectorAll('.search-tag').forEach(tag => {
+                tag.addEventListener('click', function () {
+                    const searchType = this.dataset.type;
+                    const searchValue = this.dataset.value;
+
+                    document.querySelector('select[name="search_type"]').value = searchType;
+                    document.querySelector('input[name="search_value"]').value = searchValue;
+
+                    // 提交表单
+                    const form = document.querySelector('form');
+                    if (form) {
+                        form.submit();
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>

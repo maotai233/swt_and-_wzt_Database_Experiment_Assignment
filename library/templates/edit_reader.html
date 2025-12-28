@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>编辑读者 - 图书管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.bootcdn.net/ajax/libs/daisyui/4.12.10/full.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script>
+        // 全局变量存储读者编号
+        let currentReaderNumber = '';
+    </script>
+</head>
+<body class="bg-gray-50">
+  <!-- 导航栏 -->
+  <div class="navbar" style="background-color:#7F5FCE; color:white;">
+    <div class="flex-1">
+      <a href="/admin/dashboard" class="btn btn-ghost normal-case text-xl">
+        <i class="fas fa-book mr-2"></i>图书管理系统 - 管理员
+      </a>
+    </div>
+    <div class="flex-none">
+      <ul class="menu menu-horizontal px-1">
+        <li class="mr-4"> <a href="/admin/dashboard" class="btn border-none" style="background-color: #d4c4e7; ">返回管理员面板</a></li>
+        <li class="mr-4"><a href="/admin/readers" class="btn border-none" style="background-color: #d4c4e7; ">返回读者列表</a></li>
+        <li><a href="/logout" class="btn btn-error">退出登录</a></li>
+      </ul>
+    </div>
+  </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-2xl mx-auto">
+            <div class="card bg-white shadow-lg">
+                <div class="card-body">
+                    <h1 class="text-2xl font-bold text-gray-800 mb-6">
+                        <i class="fas fa-user-edit text-blue-600 mr-2"></i>编辑读者信息
+                    </h1>
+                    
+                    <!-- 结果显示区域 -->
+                    <div id="resultMessage" class="mb-4"></div>
+                    
+                    <div id="readerInfo">
+                        <!-- 读者信息将通过JavaScript加载 -->
+                        <div class="text-center py-8">
+                            <div class="loading loading-spinner loading-lg"></div>
+                            <p class="mt-4 text-gray-600">正在加载读者信息...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            // 从URL获取读者编号
+            const pathSegments = window.location.pathname.split('/');
+            const readerNumber = pathSegments[pathSegments.length - 1];
+            
+            console.log('[DEBUG] 加载读者编号:', readerNumber);
+            
+            if (!readerNumber || readerNumber === 'edit_reader' || readerNumber === '') {
+                showError('读者编号无效');
+                return;
+            }
+            
+            currentReaderNumber = readerNumber;
+            
+            // 加载读者信息
+            loadReaderInfo(readerNumber);
+        });
+        
+        // 加载读者信息
+        function loadReaderInfo(readerNumber) {
+            console.log('[DEBUG] 调用API: /api/readers/' + readerNumber);
+            
+            fetch(`/api/readers/${readerNumber}`, {
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                console.log('[DEBUG] 响应状态:', response.status, response.statusText);
+                
+                // 检查响应内容类型
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    return response.text().then(text => {
+                        console.error('[ERROR] 服务器返回的不是JSON:', text.substring(0, 200));
+                        throw new Error('服务器返回了非JSON格式的响应，可能是权限问题或路由错误');
+                    });
+                }
+                
+                return response.json();
+            })
+            .then(data => {
+                console.log('[DEBUG] API响应:', data);
+                
+                if (data.success && data.reader) {
+                    displayReaderForm(data.reader);
+                } else {
+                    showError(data.message || '加载读者信息失败');
+                }
+            })
+            .catch(error => {
+                console.error('[ERROR] 加载读者信息出错:', error);
+                
+                let errorMessage = error.message;
+                if (error.message.includes('JSON') || error.message.includes('格式')) {
+                    errorMessage = '服务器返回了错误的响应格式。请检查：<br>' +
+                                  '1. 是否已登录管理员账号<br>' +
+                                  '2. API路由是否正确配置<br>' +
+                                  '3. 服务器是否正常运行';
+                }
+                
+                showError(errorMessage);
+            });
+        }
+        
+        // 显示读者表单
+        function displayReaderForm(reader) {
+            const borrowDays = reader.borrow_days || 30;
+            
+            document.getElementById('readerInfo').innerHTML = `
+                <form id="editReaderForm" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">读者编号</span>
+                            </label>
+                            <input type="text" value="${reader.reader_number}" class="input input-bordered" readonly>
+                        </div>
+                        
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">借阅卡号</span>
+                            </label>
+                            <input type="text" value="${reader.card_number}" class="input input-bordered" readonly>
+                        </div>
+                        
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">姓名 *</span>
+                            </label>
+                            <input type="text" id="reader_name" value="${reader.reader_name}" class="input input-bordered" required>
+                        </div>
+                        
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">性别 *</span>
+                            </label>
+                            <select id="sex" class="select select-bordered" required>
+                                <option value="男" ${reader.sex === '男' ? 'selected' : ''}>男</option>
+                                <option value="女" ${reader.sex === '女' ? 'selected' : ''}>女</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-control md:col-span-2">
+                            <label class="label">
+                                <span class="label-text">身份证号 *</span>
+                            </label>
+                            <input type="text" id="id_number" value="${reader.id_number}" class="input input-bordered" 
+                                   pattern="\\d{17}[\\dXx]" maxlength="18" required>
+                            <label class="label">
+                                <span class="label-text-alt text-gray-500">请正确填写18位身份证号</span>
+                            </label>
+                        </div>
+                        
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">可借册数 *</span>
+                            </label>
+                            <input type="number" id="borrowable_books" value="${reader.borrowable_books}" 
+                                   class="input input-bordered" min="1" max="20" required>
+                            <label class="label">
+                                <span class="label-text-alt text-gray-500">范围1-20本</span>
+                            </label>
+                        </div>
+                        
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">借期天数 *</span>
+                            </label>
+                            <input type="number" id="borrow_days" value="${borrowDays}" 
+                                   class="input input-bordered" min="7" max="90" required>
+                            <label class="label">
+                                <span class="label-text-alt text-gray-500">范围7-90天</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-control mt-6">
+                        <button type="submit" class="btn btn-primary" style="color:white">
+                            <i class="fas fa-save mr-2"></i>保存修改
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="divider">或</div>
+                
+                <div class="text-center">
+                    <a href="/admin/readers" class="btn btn-ghost">
+                        <i class="fas fa-arrow-left mr-2"></i>返回读者列表
+                    </a>
+                </div>
+            `;
+            
+            // 身份证号输入时自动格式化
+            document.getElementById('id_number').addEventListener('input', function(e) {
+                let value = e.target.value.replace(/[^\dXx]/g, '').toUpperCase();
+                if (value.length > 18) {
+                    value = value.substring(0, 18);
+                }
+                e.target.value = value;
+            });
+            
+            // 添加表单提交事件
+            document.getElementById('editReaderForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveReaderChanges();
+            });
+        }
+        
+        // 保存读者修改
+        function saveReaderChanges() {
+            const updatedData = {
+                reader_name: document.getElementById('reader_name').value.trim(),
+                sex: document.getElementById('sex').value,
+                id_number: document.getElementById('id_number').value.trim(),
+                borrowable_books: parseInt(document.getElementById('borrowable_books').value),
+                borrow_days: parseInt(document.getElementById('borrow_days').value)
+            };
+            
+            // 验证必填字段
+            const requiredFields = ['reader_name', 'sex', 'id_number'];
+            for (const field of requiredFields) {
+                if (!updatedData[field]) {
+                    showMessage(`请填写"${getFieldLabel(field)}"字段！`, 'error');
+                    return;
+                }
+            }
+            
+            // 验证身份证号格式
+            const idCardPattern = /^\d{17}[\dXx]$/;
+            if (!idCardPattern.test(updatedData.id_number)) {
+                showMessage('请输入有效的18位身份证号！', 'error');
+                return;
+            }
+            
+            // 验证可借册数范围
+            if (updatedData.borrowable_books < 1 || updatedData.borrowable_books > 20) {
+                showMessage('可借册数应在1-20本之间！', 'error');
+                return;
+            }
+            
+            // 验证借期天数范围
+            if (updatedData.borrow_days < 7 || updatedData.borrow_days > 90) {
+                showMessage('借期天数应在7-90天之间！', 'error');
+                return;
+            }
+            
+            console.log('[DEBUG] 提交数据:', updatedData);
+            
+            // 显示加载状态
+            showMessage('正在提交数据，请稍候...', 'info');
+            
+            fetch(`/api/readers/${currentReaderNumber}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(updatedData)
+            })
+            .then(response => {
+                console.log('[DEBUG] 更新响应状态:', response.status);
+                
+                // 检查响应内容类型
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    return response.text().then(text => {
+                        console.error('[ERROR] 更新响应不是JSON:', text.substring(0, 200));
+                        throw new Error('服务器返回了非JSON格式的响应');
+                    });
+                }
+                
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showMessage('修改成功！3秒后自动返回读者列表...', 'success');
+                    
+                    // 3秒后跳转回读者列表
+                    setTimeout(() => {
+                        window.location.href = '/admin/readers';
+                    }, 3000);
+                } else {
+                    showMessage(`修改失败：${data.message}`, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('[ERROR] 更新读者信息出错:', error);
+                showMessage(`提交失败：${error.message}`, 'error');
+            });
+        }
+        
+        // 显示错误
+        function showError(message) {
+            document.getElementById('readerInfo').innerHTML = `
+                <div class="alert alert-error">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <div class="flex-1">
+                        <h3 class="font-bold">加载失败</h3>
+                        <div class="text-xs">${message}</div>
+                    </div>
+                </div>
+                <div class="mt-4 space-y-2">
+                    <p class="text-sm text-gray-600">可能的原因：</p>
+                    <ul class="list-disc pl-5 text-sm text-gray-500">
+                        <li>读者编号不存在</li>
+                        <li>您没有管理员权限</li>
+                        <li>服务器API配置错误</li>
+                        <li>网络连接问题</li>
+                    </ul>
+                </div>
+                <div class="mt-6 flex gap-2">
+                    <a href="/admin/readers" class="btn btn-primary">
+                        <i class="fas fa-arrow-left mr-2"></i>返回读者列表
+                    </a>
+                    <button onclick="window.location.reload()" class="btn btn-ghost">
+                        <i class="fas fa-redo mr-2"></i>刷新页面
+                    </button>
+                </div>
+            `;
+        }
+        
+        // 显示消息的函数
+        function showMessage(message, type) {
+            const resultDiv = document.getElementById('resultMessage');
+            const typeClass = {
+                'success': 'alert-success',
+                'error': 'alert-error',
+                'info': 'alert-info',
+                'warning': 'alert-warning'
+            }[type];
+            
+            const iconClass = {
+                'success': 'fa-check-circle',
+                'error': 'fa-exclamation-circle',
+                'info': 'fa-info-circle',
+                'warning': 'fa-exclamation-triangle'
+            }[type];
+            
+            resultDiv.innerHTML = `
+                <div class="alert ${typeClass}">
+                    <i class="fas ${iconClass}"></i>
+                    <div class="flex-1">${message}</div>
+                </div>
+            `;
+            
+            // 如果是错误消息，3秒后自动清除
+            if (type === 'error') {
+                setTimeout(() => {
+                    resultDiv.innerHTML = '';
+                }, 5000);
+            }
+        }
+        
+        // 获取字段标签
+        function getFieldLabel(fieldName) {
+            const labels = {
+                'reader_name': '姓名',
+                'sex': '性别',
+                'id_number': '身份证号'
+            };
+            return labels[fieldName] || fieldName;
+        }
+    </script>
+</body>
+</html>

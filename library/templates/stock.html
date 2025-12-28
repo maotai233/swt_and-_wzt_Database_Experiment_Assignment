@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>读者管理 - 图书管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.bootcdn.net/ajax/libs/daisyui/4.12.10/full.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+  <!-- 导航栏 -->
+  <div class="navbar" style="background-color:#7F5FCE; color:white;">
+    <div class="flex-1">
+      <a href="/admin/dashboard" class="btn btn-ghost normal-case text-xl">
+        <i class="fas fa-book mr-2"></i>图书管理系统 - 管理员
+      </a>
+    </div>
+    <div class="flex-none">
+      <ul class="menu menu-horizontal px-1">
+        <li class="mr-4"> <a href="/admin/dashboard" class="btn border-none" style="background-color: #d4c4e7; ">返回管理员面板</a></li>
+        <li><a href="/logout" class="btn btn-error">退出登录</a></li>
+      </ul>
+    </div>
+  </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">
+                <i class="fas fa-truck text-purple-600 mr-3"></i>图书入库管理
+            </h1>
+            <p class="text-gray-600 mt-2">管理图书入库记录和库存</p>
+        </div>
+
+        <!-- 入库操作 -->
+        <div class="card bg-white shadow-lg mb-8">
+            <div class="card-body">
+                <h2 class="card-title text-purple-600 mb-4" >
+                    <i class="fas fa-plus mr-2" ></i>新书入库
+                </h2>
+                
+                <!-- 消息提示 -->
+                <div id="message" class="mb-4"></div>
+                
+                <form id="stockForm" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">入库单编号 *</span>
+                            </label>
+                            <input type="text" id="stock_no" class="input input-bordered" 
+                                   placeholder="如：ST202312001" required>
+                            <label class="label">
+                                <span class="label-text-alt text-gray-500">建议格式：ST+年月+序号</span>
+                            </label>
+                        </div>
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">入库日期 *</span>
+                            </label>
+                            <input type="date" id="stock_date" class="input input-bordered" required>
+                        </div>
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">图书编号 *</span>
+                            </label>
+                            <select id="book_no" class="select select-bordered" required>
+                                <option value="">选择图书</option>
+                                {% for book in books %}
+                                <option value="{{ book[0] }}">{{ book[0] }} - {{ book[1] }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">入库数量 *</span>
+                            </label>
+                            <input type="number" id="stock_num" class="input input-bordered" 
+                                   min="1" max="1000" value="1" required>
+                            <label class="label">
+                                <span class="label-text-alt text-gray-500">范围：1-1000本</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">经手人</span>
+                        </label>
+                        <select id="manager_no" class="select select-bordered">
+                            <option value="">选择经手人</option>
+                            {% for manager in managers %}
+                            <option value="{{ manager[0] }}">{{ manager[1] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-control mt-6">
+                        <button type="submit" id="submitBtn" class="btn btn-primary border-none" style="background-color: #9333ea;color:white; ">
+                            <i class="fas fa-save mr-2"></i>保存入库记录
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 入库记录列表 -->
+        <div class="card bg-white shadow-lg">
+            <div class="card-body">
+                <h2 class="card-title text-blue-600 mb-4">
+                    <i class="fas fa-list mr-2"></i>入库记录
+                </h2>
+                
+                <!-- 搜索和筛选 -->
+                <div class="flex flex-col md:flex-row gap-4 mb-4">
+                    <div class="flex-1">
+                        <input type="text" id="searchInput" placeholder="搜索入库单号、图书名称..." 
+                               class="input input-bordered w-full">
+                    </div>
+                    <button onclick="searchStocks()" class="btn btn-primary border-none" style="background-color: #2563eb; color:white;">
+                        <i class="fas fa-search mr-2"></i>搜索
+                    </button>
+                    <button onclick="refreshStocks()" class="btn btn-ghost">
+                        <i class="fas fa-redo mr-2"></i>刷新
+                    </button>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra w-full">
+                        <thead>
+                            <tr class="bg-blue-50">
+                                <th>入库单编号</th>
+                                <th>入库日期</th>
+                                <th>经手人</th>
+                                <th>图书编号</th>
+                                <th>书名</th>
+                                <th>出版社</th>
+                                <th>入库数量</th>
+                                <th>状态</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stockList">
+                            {% for stocking in stockings %}
+                            <tr>
+                                <td>{{ stocking[0] }}</td>
+                                <td>{{ stocking[1] }}</td>
+                                <td>{{ stocking[2] }}</td>
+                                <td>{{ stocking[4] }}</td>
+                                <td>{{ stocking[5] }}</td>
+                                <td>{{ stocking[6] }}</td>
+                                <td>{{ stocking[7] }}</td>
+                                <td>
+                                    {% if stocking[3] == '1' %}
+                                    <span class="badge badge-success">已入库</span>
+                                    {% else %}
+                                    <span class="badge badge-warning">未入库</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 分页 -->
+                <div class="flex justify-center mt-4">
+                    <div class="join">
+                        <button class="join-item btn btn-sm">«</button>
+                        <button class="join-item btn btn-sm btn-active">1</button>
+                        <button class="join-item btn btn-sm">2</button>
+                        <button class="join-item btn btn-sm">3</button>
+                        <button class="join-item btn btn-sm">»</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 页面加载时设置默认日期为今天
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('stock_date').value = today;
+            
+            // 加载入库记录
+            loadStockList();
+        });
+        
+        // 显示消息
+        function showMessage(message, type = 'info') {
+            const messageDiv = document.getElementById('message');
+            const alertClasses = {
+                'success': 'alert-success',
+                'error': 'alert-error',
+                'info': 'alert-info',
+                'warning': 'alert-warning'
+            };
+            
+            const iconClasses = {
+                'success': 'fa-check-circle',
+                'error': 'fa-exclamation-circle',
+                'info': 'fa-info-circle',
+                'warning': 'fa-exclamation-triangle'
+            };
+            
+            messageDiv.innerHTML = `
+                <div class="alert ${alertClasses[type]}">
+                    <i class="fas ${iconClasses[type]}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            // 3秒后自动清除消息
+            if (type !== 'error') {
+                setTimeout(() => {
+                    messageDiv.innerHTML = '';
+                }, 3000);
+            }
+        }
+        
+        // 入库表单提交
+        document.getElementById('stockForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // 获取表单数据
+            const stockData = {
+                stock_no: document.getElementById('stock_no').value.trim(),
+                stock_date: document.getElementById('stock_date').value,
+                book_no: document.getElementById('book_no').value,
+                stock_num: parseInt(document.getElementById('stock_num').value),
+                manager_no: document.getElementById('manager_no').value || null
+            };
+            
+            // 验证数据
+            if (!stockData.stock_no) {
+                showMessage('请输入入库单编号', 'error');
+                return;
+            }
+            
+            if (!stockData.stock_date) {
+                showMessage('请选择入库日期', 'error');
+                return;
+            }
+            
+            if (!stockData.book_no) {
+                showMessage('请选择图书', 'error');
+                return;
+            }
+            
+            if (stockData.stock_num <= 0) {
+                showMessage('入库数量必须大于0', 'error');
+                return;
+            }
+            
+            // 禁用提交按钮，防止重复提交
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>处理中...';
+            
+            try {
+                // 发送请求
+                const response = await fetch('/api/stock', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(stockData)
+                });
+                
+                // 检查响应类型
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    console.error('非JSON响应:', text.substring(0, 200));
+                    throw new Error('服务器返回了非JSON格式的响应');
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage(data.message, 'success');
+                    
+                    // 清空表单
+                    document.getElementById('stockForm').reset();
+                    
+                    // 设置默认日期
+                    const today = new Date().toISOString().split('T')[0];
+                    document.getElementById('stock_date').value = today;
+                    
+                    // 刷新入库记录列表
+                    loadStockList();
+                } else {
+                    showMessage('入库失败：' + data.message, 'error');
+                }
+            } catch (error) {
+                console.error('入库出错:', error);
+                showMessage('入库失败：' + error.message, 'error');
+            } finally {
+                // 恢复提交按钮
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-save mr-2"></i>保存入库记录';
+            }
+        });
+        
+        // 加载入库记录列表
+        async function loadStockList() {
+            try {
+                const response = await fetch('/api/stock/list', {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP错误 ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateStockTable(data.stockings);
+                } else {
+                    console.error('加载入库记录失败:', data.message);
+                }
+            } catch (error) {
+                console.error('加载入库记录出错:', error);
+            }
+        }
+        
+        // 更新入库记录表格
+        function updateStockTable(stockings) {
+            const tbody = document.getElementById('stockList');
+            
+            if (!stockings || stockings.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="text-center py-8">
+                            <p class="text-gray-500">暂无入库记录</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            let html = '';
+            stockings.forEach(stock => {
+                html += `
+                    <tr>
+                        <td>${stock.stock_no || ''}</td>
+                        <td>${stock.stock_date || ''}</td>
+                        <td>${stock.manager_name || ''}</td>
+                        <td>${stock.book_no || ''}</td>
+                        <td>${stock.book_name || ''}</td>
+                        <td>${stock.publisher_name || ''}</td>
+                        <td>${stock.quantity || 0}</td>
+                        <td>
+                            <span class="badge ${stock.status === '已入库' ? 'badge-success' : 'badge-warning'}">
+                                ${stock.status || '未知'}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+        }
+        
+        
+        // 搜索入库记录
+        function searchStocks() {
+            const searchValue = document.getElementById('searchInput').value.trim().toLowerCase();
+            const rows = document.querySelectorAll('#stockList tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                if (text.includes(searchValue)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+        
+        // 刷新入库记录
+        function refreshStocks() {
+            loadStockList();
+            document.getElementById('searchInput').value = '';
+            showMessage('已刷新入库记录', 'info');
+        }
+        
+        // 生成入库单号
+        function generateStockNo() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+            
+            const stockNo = `ST${year}${month}${day}${random}`;
+            document.getElementById('stock_no').value = stockNo;
+        }
+        
+        // 按回车搜索
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchStocks();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 图书管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.bootcdn.net/ajax/libs/daisyui/4.12.10/full.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-md mx-auto">
+            <!-- 登录卡片 -->
+            <div class="card bg-white shadow-2xl">
+                <div class="card-body">
+                    <div class="text-center mb-6">
+                        <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                            <i class="fas fa-book text-blue-600 mr-2"></i>图书管理系统
+                        </h1>
+                        <p class="text-gray-600">请登录您的账户</p>
+                    </div>
+
+                    <form method="POST" action="/login">
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">用户名</span>
+                            </label>
+                            <input type="text" name="username" placeholder="请输入用户名" class="input input-bordered"
+                                required>
+                        </div>
+
+                        <div class="form-control mt-4">
+                            <label class="label">
+                                <span class="label-text">密码</span>
+                            </label>
+                            <input type="password" name="password" placeholder="请输入密码" class="input input-bordered"
+                                required>
+                        </div>
+
+                        <div class="form-control mt-4">
+                            <label class="label">
+                                <span class="label-text">用户类型</span>
+                            </label>
+                            <select name="user_type" class="select select-bordered" required>
+                                <option value="">请选择用户类型</option>
+                                <option value="admin">管理员</option>
+                                <option value="reader">读者</option>
+                            </select>
+                        </div>
+
+                        <div class="form-control mt-6">
+                            <button type="submit" class="btn btn-primary w-full" style="color:white">
+                                <i class="fas fa-sign-in-alt mr-2"></i>登录
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- 演示账户信息 -->
+                    <!-- 在演示账户信息下方添加注册链接 -->
+                    <div class="divider">或</div>
+                    <div class="text-center">
+                        <a href="/register" class="text-blue-600 hover:text-blue-800 font-medium">
+                            <i class="fas fa-user-plus mr-1"></i>还没有账户？立即注册
+                        </a>
+                    </div>
+
+                    <div class="divider">演示账户</div>
+                    <div class="text-sm text-gray-600 space-y-2">
+                        <div class="bg-gray-50 p-3 rounded-lg">
+                            <p class="font-semibold text-blue-600">管理员账户</p>
+                            <p>用户名：admin</p>
+                            <p>密码：admin123</p>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-lg">
+                            <p class="font-semibold text-green-600">读者账户1</p>
+                            <p>用户名：reader001</p>
+                            <p>密码：reader123</p>
+                            <p class="font-semibold text-green-600">读者账户2</p>
+                            <p>用户名：reader002</p>
+                            <p>密码：reader123</p>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <a href="/" class="text-blue-600 hover:text-blue-800">
+                            <i class="fas fa-arrow-left mr-1"></i>返回首页
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="footer footer-center p-4 text-white mt-16" style="background-color: #7F5FCE;">
+        <div>
+            <p>图书管理系统 - 登录</p>
+            <p class="text-sm text-white-400">数据库系统原理及实验</p>
+            </p>
+        </div>
+    </footer>
+</body>
+
+</html>

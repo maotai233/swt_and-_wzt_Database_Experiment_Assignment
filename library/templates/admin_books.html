@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图书管理 - 图书管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.bootcdn.net/ajax/libs/daisyui/4.12.10/full.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <!-- 导航栏 -->
+    <div class="navbar" style="background-color:#7F5FCE; color:white;">
+        <div class="flex-1">
+            <a href="/admin/dashboard" class="btn btn-ghost normal-case text-xl">
+                <i class="fas fa-book mr-2"></i>图书管理系统 - 管理员
+            </a>
+        </div>
+        <div class="flex-none">
+            <ul class="menu menu-horizontal px-1">
+                <li class="mr-4">
+                    <a href="/admin/dashboard" class="btn border-none" style="background-color: #d4c4e7; ">返回管理员面板</a></li>
+                </li>
+                <li><a href="/logout" class="btn btn-error">退出登录</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <!-- 页面标题 -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">
+                <i class="fas fa-book text-blue-600 mr-3"></i>图书管理
+            </h1>
+            <p class="text-gray-600 mt-2">管理图书馆的所有图书信息</p>
+        </div>
+
+        <!-- 搜索和添加区域 -->
+        <div class="card bg-white shadow-lg mb-8">
+            <div class="card-body">
+                <div class="flex flex-col md:flex-row gap-4">
+                    <div class="flex-1">
+                        <input type="text" id="searchInput" placeholder="搜索图书（书名、作者、图书类型）..." class="input input-bordered w-full">
+                    </div>
+                    <select id="searchType" class="select select-bordered">
+                        <option value="name">按书名</option>
+                        <option value="author">按作者</option>
+                        <option value="type">按图书类型</option>
+                    </select>
+                    <button onclick="searchBooks()" class="btn btn-primary border-none"  style="background-color: #2563EB; color: rgb(255, 255, 255);">
+                        <i class="fas fa-search mr-2" ></i>搜索
+                    </button>
+                    <a href="/admin/add_book" class="btn btn-success border-none"  style="background-color: #a586f3; color: rgb(255, 255, 255);">
+                        <i class="fas fa-plus mr-2"></i>添加图书
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 图书列表 -->
+        <div class="card bg-white shadow-lg">
+            <div class="card-body">
+                <h2 class="card-title text-blue-600 mb-4">
+                    <i class="fas fa-list mr-2"></i>图书列表
+                </h2>
+
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra w-full">
+                        <thead>
+                            <tr class="bg-blue-50">
+                                <th>图书编号</th>
+                                <th>书名</th>
+                                <th>作者</th>
+                                <th>图书类型</th>
+                                <th>出版社</th>
+                                <th>价格</th>
+                                <th>总数量</th>
+                                <th>现存量</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="booksTableBody">
+                            {% for book in books %}
+                            <tr>
+                                <td>{{ book[0] }}</td>
+                                <td>{{ book[1] }}</td>
+                                <td>{{ book[2] }}</td>
+                                <td>{{ book[3] }}</td>
+                                <td>{{ book[4] }}</td>
+                                <td>{{ book[5] }}</td>
+                                <td>{{ book[6] }}</td>
+                                <td>{{ book[7] }}</td>
+                                <td>
+                                    <div class="flex gap-2">
+                                        <a href="/admin/edit_book/{{ book[0] }}" class="btn btn-sm btn-warning">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button onclick="deleteBook('{{ book[0] }}')" class="btn btn-sm btn-error">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function searchBooks() {
+            const searchType = document.getElementById('searchType')?.value || 'name';
+            const searchValue = document.getElementById('searchInput')?.value;
+            
+            if (!searchValue || searchValue.trim() === '') {
+                alert('请输入搜索关键词');
+                return;
+            }
+            
+            // 在当前页面重定向，添加搜索参数
+            window.location.href = `/admin/books?search_type=${searchType}&search_value=${encodeURIComponent(searchValue.trim())}`;
+        }
+        
+        function deleteBook(bookNumber) {
+            if (confirm('确定要删除这本书吗？')) {
+                // 调用删除API
+                fetch(`/api/books/${bookNumber}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('删除成功！');
+                        location.reload();
+                    } else {
+                        alert('删除失败：' + (data.message || '未知错误'));
+                    }
+                })
+                .catch(error => {
+                    console.error('删除出错:', error);
+                    alert('删除出错，请稍后重试');
+                });
+            }
+        }
+        
+        // 按回车键搜索
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchBooks();
+            }
+        });
+    </script>
+</body>
+</html>

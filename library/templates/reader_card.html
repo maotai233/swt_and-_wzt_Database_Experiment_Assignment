@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>借阅卡管理 - 读者端</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.bootcdn.net/ajax/libs/daisyui/4.12.10/full.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <!-- 导航栏 -->
+    <div class="navbar"  style="background-color:#2563eb; color:white;">
+        <div class="flex-1">
+            <a href="/reader/dashboard" class="btn btn-ghost normal-case text-xl">
+                <i class="fas fa-book mr-2"></i>图书管理系统 - 读者
+            </a>
+        </div>
+        <div class="flex-none">
+            <ul class="menu menu-horizontal px-1">
+                <li class="mr-4"><a href="/reader/dashboard" class="btn border-none" style="background-color: #d4c4e7; ">返回读者面板</a></li>
+                <li><a href="/logout" class="btn btn-error">退出登录</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">
+                <i class="fas fa-credit-card text-green-600 mr-3"></i>借阅卡管理
+            </h1>
+            <p class="text-gray-600 mt-2">管理您的借阅卡，包括续期、挂失等操作</p>
+        </div>
+
+        <!-- 借阅卡信息 -->
+        <div class="card bg-white shadow-lg mb-8">
+            <div class="card-body">
+                <h2 class="card-title text-gray-700 mb-6">
+                    <i class="fas fa-id-card mr-2"></i>借阅卡信息
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="card-info-container">
+                    <!-- 动态加载 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 卡片操作 -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- 卡片续期 -->
+            <div class="card bg-white shadow-lg">
+                <div class="card-body">
+                    <h2 class="card-title text-orange-600 mb-4">
+                        <i class="fas fa-calendar-plus mr-2"></i>卡片续期
+                    </h2>
+                    <p class="text-gray-600 mb-4">延长借阅卡的有效期</p>
+                    
+                    <div class="space-y-4">
+                        <select id="renew-years" class="select select-bordered w-full">
+                            <option value="1">续期1年</option>
+                            <option value="2">续期2年</option>
+                            <option value="3">续期3年</option>
+                            <option value="5">续期5年</option>
+                        </select>
+                        
+                        <button onclick="renewCard()" class="btn btn-warning w-full">
+                            <i class="fas fa-check-circle mr-2"></i>确认续期
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 卡片挂失/解挂 -->
+            <div class="card bg-white shadow-lg">
+                <div class="card-body">
+                    <h2 class="card-title text-red-600 mb-4">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>卡片挂失
+                    </h2>
+                    <p class="text-gray-600 mb-4">挂失或解挂您的借阅卡</p>
+                    
+                    <button onclick="toggleLostCard()" class="btn btn-error w-full" id="lost-button">
+                        <i class="fas fa-ban mr-2"></i>挂失卡片
+                    </button>
+                    
+                    <div class="alert alert-warning mt-4">
+                        <div>
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span>挂失后无法借阅图书，请谨慎操作</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 操作记录 -->
+        <div class="card bg-white shadow-lg mt-8">
+            <div class="card-body">
+                <h2 class="card-title text-gray-700 mb-4">
+                    <i class="fas fa-history mr-2"></i>操作说明
+                </h2>
+                
+                <div class="space-y-3">
+                    <div class="flex items-start gap-3">
+                        <i class="fas fa-info-circle text-blue-500 mt-1"></i>
+                        <div>
+                            <h3 class="font-semibold">卡片续期</h3>
+                            <p class="text-gray-600 text-sm">延长借阅卡的有效期，确保您能继续借阅图书</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start gap-3">
+                        <i class="fas fa-exclamation-circle text-red-500 mt-1"></i>
+                        <div>
+                            <h3 class="font-semibold">卡片挂失</h3>
+                            <p class="text-gray-600 text-sm">如卡片丢失或被盗，请立即挂失以防被他人冒用</p>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 页面加载时获取借阅卡信息
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCardInfo();
+        });
+        
+        // 加载借阅卡信息
+        function loadCardInfo() {
+            fetch('/api/reader/card')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayCardInfo(data.card);
+                        updateLostButton(data.card.card_status);
+                    } else {
+                        alert('获取借阅卡信息失败：' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('获取借阅卡信息出错:', error);
+                    alert('获取借阅卡信息出错，请稍后重试');
+                });
+        }
+        
+        // 显示借阅卡信息
+        function displayCardInfo(card) {
+            const container = document.getElementById('card-info-container');
+            
+            const cardHTML = `
+                <div class="space-y-4">
+                    <div>
+                        <label class="label">
+                            <span class="label-text font-semibold">借阅卡号</span>
+                        </label>
+                        <div class="input input-bordered w-full">${card.card_number}</div>
+                    </div>
+                    
+                    <div>
+                        <label class="label">
+                            <span class="label-text font-semibold">卡状态</span>
+                        </label>
+                        <div class="input input-bordered w-full">
+                            ${card.card_status === '正常' ? 
+                              '<span class="badge badge-success">正常</span>' : 
+                              '<span class="badge badge-error">挂失</span>'}
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="label">
+                                <span class="label-text font-semibold">可借册数</span>
+                            </label>
+                            <div class="input input-bordered w-full">${card.can_borrow_books}</div>
+                        </div>
+                        <div>
+                            <label class="label">
+                                <span class="label-text font-semibold">当前借阅</span>
+                            </label>
+                            <div class="input input-bordered w-full">${card.current_borrowed}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="label">
+                            <span class="label-text font-semibold">办卡日期</span>
+                        </label>
+                        <div class="input input-bordered w-full">${card.card_date}</div>
+                    </div>
+                    
+                    <div>
+                        <label class="label">
+                            <span class="label-text font-semibold">有效期至</span>
+                        </label>
+                        <div class="input input-bordered w-full">${card.renew_date || '--'}</div>
+                    </div>                    
+                    <div>
+                        <label class="label">
+                            <span class="label-text font-semibold">未缴罚款</span>
+                        </label>
+                        <div class="input input-bordered w-full text-red-600 font-bold">
+                            ¥${card.reader_fine.toFixed(2)}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            container.innerHTML = cardHTML;
+        }
+        
+        // 更新挂失按钮状态
+        function updateLostButton(cardStatus) {
+            const lostButton = document.getElementById('lost-button');
+            
+            if (cardStatus === '挂失') {
+                lostButton.innerHTML = '<i class="fas fa-unlock mr-2"></i>解除挂失';
+                lostButton.className = 'btn btn-success w-full';
+            } else {
+                lostButton.innerHTML = '<i class="fas fa-ban mr-2"></i>挂失卡片';
+                lostButton.className = 'btn btn-error w-full';
+            }
+        }
+        
+        // 卡片续期
+        function renewCard() {
+            const renewYears = document.getElementById('renew-years').value;
+            
+            if (!confirm(`确认续期${renewYears}年吗？`)) {
+                return;
+            }
+            
+            fetch('/api/reader/card', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    action: 'renew',
+                    renew_years: parseInt(renewYears)
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    loadCardInfo(); // 重新加载信息
+                } else {
+                    alert('续期失败：' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('续期操作出错:', error);
+                alert('续期操作出错，请稍后重试');
+            });
+        }
+        
+        // 切换挂失状态
+        function toggleLostCard() {
+            const cardStatus = document.getElementById('lost-button').textContent.includes('挂失') ? '挂失' : '解挂';
+            const confirmMessage = cardStatus === '挂失' ? 
+                '确认要挂失借阅卡吗？挂失后将无法借阅图书。' :
+                '确认要解除挂失吗？';
+            
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+            
+            fetch('/api/reader/card', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    action: 'toggle_lost'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    loadCardInfo(); // 重新加载信息
+                } else {
+                    alert('操作失败：' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('挂失操作出错:', error);
+                alert('操作出错，请稍后重试');
+            });
+        }
+        
+    </script>
+</body>
+</html>
